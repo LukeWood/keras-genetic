@@ -56,7 +56,7 @@ results = keras_genetic.search(
     return_best=1,
 )
 
-result_model = results.best.load_model()
+model = results.best.load_model()
 
 result = model.evaluate(x_test, y_test, return_dict=True, verbose=0)
 print("Accuracy:", result["accuracy"])
