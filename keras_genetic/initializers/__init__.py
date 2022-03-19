@@ -1,1 +1,2 @@
 from keras_genetic.initializers.random_normal import RandomNormal
+from keras_genetic.initializers.initializer import Initializer

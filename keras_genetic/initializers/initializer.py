@@ -1,4 +1,4 @@
 
 class Initializer():
     def __call__(self):
-        return self.call()
+        raise NotImplementedError("Initializer must implement __call__().")

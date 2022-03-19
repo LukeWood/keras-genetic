@@ -26,8 +26,8 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 setup(
-    name="ez-timer",
-    description="The simplest way to time a block of code.",
+    name="keras-genetic",
+    description="Train keras models with genetic algorithms.",
     version="0.0.1",
     long_description=README,
     long_description_content_type="text/markdown",

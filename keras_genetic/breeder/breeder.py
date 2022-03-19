@@ -8,7 +8,7 @@ class Breeder:
             mother: keras_genetic.Individual.
             father: keras_genetic.Individual.
         Returns:
-            a new offspring set of weights.
+            a new keras_genetic.Individual representing the offspring.
         """
         raise NotImplementedError(
             "`offspring()` must be implemented on the breeder class."
