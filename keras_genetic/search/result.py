@@ -1,11 +1,12 @@
 import numpy as np
 from tensorflow import keras
 
-@dataclass
+
 class SearchResult:
     """SearchResult contains the results for a search call."""
 
-    results: List[keras_genetic.individual]
+    def __init__(self, results):
+        self.results = results
 
     @property
     def best(self):

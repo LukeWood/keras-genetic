@@ -1,17 +1,22 @@
-import keras_genetic
 import random
+
+import numpy as np
 from tensorflow import keras
 from tensorflow.keras import initializers
 
-class RandomFeatureMutationBreeder(keras_genetic.Breeder):
+from keras_genetic.breeder.breeder import Breeder
+
+
+class RandomFeatureMutationBreeder(Breeder):
     """RandomFeatureMutationBreeder randomly mutates features on individuals."""
 
-    def __init__(self,
+    def __init__(
+        self,
         keep_probability=0.9,
-        initializer=None,
+        **kwargs,
     ):
+        super().__init__(**kwargs)
         self.keep_probability = keep_probability
-        self.initializer = initializer
 
     def offspring(self, mother, father):
         offspring_weights = []
@@ -34,4 +39,4 @@ class RandomFeatureMutationBreeder(keras_genetic.Breeder):
 
             offspring_weights.append(np.array(result).reshape(shape))
 
-        return kersa_genetic.Individual(offspring_weights, model=mother.model)
+        return keras_genetic.Individual(offspring_weights, model=mother.model)

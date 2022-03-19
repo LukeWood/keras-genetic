@@ -1,7 +1,29 @@
+import numpy as np
 from tensorflow import keras
+from tensorflow.keras import layers
+
 import keras_genetic
 
-(x_train,  y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+num_classes = 10
+input_shape = (28, 28, 1)
+
+# the data, split between train and test sets
+(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+
+# Scale images to the [0, 1] range
+x_train = x_train.astype("float32") / 255
+x_test = x_test.astype("float32") / 255
+# Make sure images have shape (28, 28, 1)
+x_train = np.expand_dims(x_train, -1)
+x_test = np.expand_dims(x_test, -1)
+print("x_train shape:", x_train.shape)
+print(x_train.shape[0], "train samples")
+print(x_test.shape[0], "test samples")
+
+
+# convert class vectors to binary class matrices
+y_train = keras.utils.to_categorical(y_train, num_classes)
+y_test = keras.utils.to_categorical(y_test, num_classes)
 
 model = keras.Sequential(
     [
@@ -14,24 +36,27 @@ model = keras.Sequential(
         layers.Dense(num_classes, activation="softmax"),
     ]
 )
-model.compile(metrics=['accuracy'])
+model.compile(metrics=["accuracy"])
+
 
 def evaluate_accuracy(individual: keras_genetic.Individual):
     model = individual.load_model()
     result = model.evaluate(x_train, y_train, return_dict=True)
-    return result['accuracy']
+    return result["accuracy"]
+
 
 results = keras_genetic.search(
     model=model,
     # computational cost is evaluate*generations*population_size
     evaluator=evaluate_accuracy,
-    generations=25,
-    population_size=25,
-    breeder=keras_genetic.breeder.RandomFeatureMutationBreeder()
+    generations=10,
+    population_size=50,
+    n_parents_from_population=5,
+    breeder=keras_genetic.breeder.RandomFeatureMutationBreeder(),
     return_best=1,
 )
 
 result_model = results.best.load_model()
 
 result = model.evaluate(x_test, y_test, return_dict=True)
-print("Accuracy:", result['accuracy'])
+print("Accuracy:", result["accuracy"])

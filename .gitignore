@@ -1,2 +1,4 @@
 dist/
 keras_genetic.egg-info/
+
+__pycache__/

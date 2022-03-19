@@ -1,6 +1,12 @@
-import keras_genetic
 import numpy as np
 
-class RandomNormal(keras_genetic.initializers.Initializer):
-  def __call__(self):
-    return np.random_normal()
+from keras_genetic.initializers.initializer import Initializer
+
+
+class RandomNormal(Initializer):
+    def __init__(self, mean=0, std=10):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self):
+        return np.random.normal(self.mean, self.std)
