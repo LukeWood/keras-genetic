@@ -41,7 +41,7 @@ model.compile(metrics=["accuracy"])
 
 def evaluate_accuracy(individual: keras_genetic.Individual):
     model = individual.load_model()
-    result = model.evaluate(x_train, y_train, return_dict=True)
+    result = model.evaluate(x_train[:100], y_train[:100], return_dict=True, verbose=0)
     return result["accuracy"]
 
 
@@ -58,5 +58,5 @@ results = keras_genetic.search(
 
 result_model = results.best.load_model()
 
-result = model.evaluate(x_test, y_test, return_dict=True)
+result = model.evaluate(x_test, y_test, return_dict=True, verbose=0)
 print("Accuracy:", result["accuracy"])

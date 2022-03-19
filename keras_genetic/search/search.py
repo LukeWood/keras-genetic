@@ -96,5 +96,5 @@ class _SearchManager:
                 parents, self.population_size
             )
 
-        final = run_final_generation(population, [], keep=self.return_best)
+        final = run_generation(population, [], keep=self.return_best)
         return SearchResult(final)

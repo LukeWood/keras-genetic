@@ -25,11 +25,11 @@ class Individual:
         y_test = model.predict(x_test)
         ```
         """
-        self.model.load_weights(self.weights)
+        self.model.set_weights(self.weights)
         return self.model
 
     def __gt__(self, other):
-        return self.score > others.score
+        return self.score > other.score
 
     def __lt__(self, other):
-        return self.score < others.score
+        return self.score < other.score

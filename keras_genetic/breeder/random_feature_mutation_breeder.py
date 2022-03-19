@@ -5,7 +5,7 @@ from tensorflow import keras
 from tensorflow.keras import initializers
 
 from keras_genetic.breeder.breeder import Breeder
-
+from keras_genetic import core
 
 class RandomFeatureMutationBreeder(Breeder):
     """RandomFeatureMutationBreeder randomly mutates features on individuals."""
@@ -32,11 +32,11 @@ class RandomFeatureMutationBreeder(Breeder):
 
             result = []
             for i in range(m.shape[0]):
-                if random.uniform() > self.keep_probability:
+                if random.uniform(0, 1) > self.keep_probability:
                     result.append(self.initializer())
                     continue
                 result.append(random.choice([m[i], f[i]]))
 
             offspring_weights.append(np.array(result).reshape(shape))
 
-        return keras_genetic.Individual(offspring_weights, model=mother.model)
+        return core.Individual(offspring_weights, model=mother.model)
