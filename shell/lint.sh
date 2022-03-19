@@ -20,12 +20,4 @@ then
     exit 1
 fi
 echo "no issues with black"
-for i in $(find keras_genetic -name '*.py') # or whatever other pattern...
-do
-  if ! grep -q Copyright $i
-  then
-    echo "Copyright not found in $i"
-    exit 1
-  fi
-done
 echo "linting success!"
