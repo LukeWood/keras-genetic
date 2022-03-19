@@ -13,12 +13,11 @@ class Breeder:
             initializer = keras_genetic.initializers.random_normal.RandomNormal()
         self.initializer = initializer
 
-    def offspring(self, mother, father):
+    def offspring(self, parents):
         """`offspring()` creates a new offspring from a mother and father model.
 
         Args:
-            mother: keras_genetic.Individual.
-            father: keras_genetic.Individual.
+            parents: list of keras_genetic.Individual.
         Returns:
             a new keras_genetic.Individual representing the offspring.
         """
@@ -29,8 +28,7 @@ class Breeder:
     def population_from_parents(self, parents, population_size):
         result = []
         for _ in range(population_size):
-            mother, father = random.sample(parents, 2)
-            result.append(self.offspring(mother, father))
+            result.append(self.offspring(parents))
         return result
 
     def fully_random_weight_set(self, mother):

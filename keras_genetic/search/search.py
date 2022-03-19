@@ -84,8 +84,8 @@ class _SearchManager:
         return result_population[:keep]
 
     def run(self, model):
-        dummy_individual = core.Individual(model.get_weights(), model)
-        population = self.initial_generation(model, dummy_individual)
+        initial_parent = core.Individual(model.get_weights(), model)
+        population = self.initial_generation(model, initial_parent)
         parents = []
 
         for _generation in tqdm.tqdm(range(self.generations)):

@@ -52,7 +52,7 @@ results = keras_genetic.search(
     generations=10,
     population_size=50,
     n_parents_from_population=5,
-    breeder=keras_genetic.breeder.RandomFeatureMutationBreeder(),
+    breeder=keras_genetic.breeder.TwoParentMutationBreeder(),
     return_best=1,
 )
 

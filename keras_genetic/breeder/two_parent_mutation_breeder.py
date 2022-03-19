@@ -4,11 +4,12 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras import initializers
 
-from keras_genetic.breeder.breeder import Breeder
 from keras_genetic import core
+from keras_genetic.breeder.breeder import Breeder
 
-class RandomFeatureMutationBreeder(Breeder):
-    """RandomFeatureMutationBreeder randomly mutates features on individuals."""
+
+class TwoParentMutationBreeder(Breeder):
+    """TwoParentMutationBreeder randomly mutates features on individuals."""
 
     def __init__(
         self,
@@ -18,7 +19,8 @@ class RandomFeatureMutationBreeder(Breeder):
         super().__init__(**kwargs)
         self.keep_probability = keep_probability
 
-    def offspring(self, mother, father):
+    def offspring(self, parents):
+        mother, father = random.sample(parents, 2)
         offspring_weights = []
 
         # each 'mother.weight', 'father.weight' we have a vector of weights
