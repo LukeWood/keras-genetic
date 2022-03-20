@@ -32,7 +32,8 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        pip install -e ".[tests]" --progress-bar off --upgrade
+        echo 0
+        # pip install -e ".[tests]" --progress-bar off --upgrade
     - name: Test with pytest
       run: |
         pytest keras_genetic/
