@@ -122,6 +122,7 @@ Before the v1.0.0 release I'd like to accomplish the following tasks:
 - ✅ support a callbacks API
 - ✅ end to end MNIST example
 - ✅ end to end CartPole example
+- implement a ProgBarLogger
 - have at least 3 distinct breeders
 - autogenerate documentation
 - generate an end to end CartPole training gif
