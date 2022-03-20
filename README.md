@@ -39,9 +39,6 @@ Some areas where genetic algorithms are applied today:
 The Keras genetic API is quick to get started with, but flexible enough to fit
 any use case you may come up with.
 
-As more generations occur, the quality of the models will improve.  For example,
-look at the following models from the [CartPole example](examples/cartpole/):
-
 There are three core components of the API that must be used to get started:
 
 - the `Individual`
@@ -89,6 +86,7 @@ preserved while some new attributes are randomly sampled.
 For most users, the `TwoParentMutationBreeder` is sufficiently effective.
 
 ### search()
+
 `search()` is akin to `model.fit()` in the core Keras framework.  The `search()` API
 supports a wide variety of parameters.  For an in depth view, browse the API docs.
 
@@ -108,13 +106,33 @@ results = keras_genetic.search(
 ```
 
 ### Further Reading
+
 Check out the [examples](examples/) and guides (Coming Soon!).
 
 ## Quickstart
+
 For now, the [MNIST Example](examples/mnist/mnist.py) serves as the Quickstart guide.
 
 
-# Thanks!
+## v1.0.0 Release Checklist
+
+Before the v1.0.0 release I'd like to accomplish the following tasks:
+
+- ✅ stabilize the base API
+- ✅ support a callbacks API
+- ✅ end to end MNIST example
+- ✅ end to end CartPole example
+- have at least 3 distinct breeders
+- autogenerate documentation
+- generate an end to end CartPole training gif
+- thoroughly document each component
+- offer implementations of  the most effective genetic algorithms
+- implement unit tests for each component
+- support random seeding
+
+Once all of these tasks are complete, I will release keras-genetic v1.0.0.
+
+## Thanks!
 
 Thank you to all of our wonderful contributors!
 
