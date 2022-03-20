@@ -40,6 +40,15 @@ Some areas where genetic algorithms are applied today:
 The Keras genetic API is quick to get started with, but flexible enough to fit
 any use case you may come up with.
 
+As more generations occur, the quality of the models will improve.  For example,
+look at the following models from the [CartPole example](examples/cartpole/):
+
+![generation 0](artifacts/cartpole/cartpole-generation-0.gif)
+![generation 1](artifacts/cartpole/cartpole-generation-1.gif)
+![generation 2](artifacts/cartpole/cartpole-generation-2.gif)
+![generation 3](artifacts/cartpole/cartpole-generation-3.gif)
+![generation 4](artifacts/cartpole/cartpole-generation-5.gif)
+
 There are three core components of the API that must be used to get started:
 
 - the `Individual`

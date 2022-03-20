@@ -32,17 +32,18 @@ def evaluate_cartpole(individual: keras_genetic.Individual):
 
     return total_reward
 
-
 results = keras_genetic.search(
     # computational cost is evaluate*generations*population_size
     model=model,
     evaluator=evaluate_cartpole,
-    generations=10,
+    generations=5,
     population_size=10,
     n_parents_from_population=3,
     breeder=keras_genetic.breeder.TwoParentMutationBreeder(),
     return_best=1,
-    callbacks=[CartpoleGifCallback(env)],
+    # note: the CartpoleGifCallback is super expensive because of the video
+    # processing.  Only enable it if you really want to create the gifs.
+    # callbacks=[CartpoleGifCallback(env)],
 )
 
 model = results.best.load_model()

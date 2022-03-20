@@ -21,7 +21,7 @@ class CartpoleGifCallback(keras_genetic.callbacks.Callback):
 
         def animate(i):
             patch.set_data(frames[i])
-            plt.title(f"Generation {generation}")
+            plt.title(f"Generation {generation+1}")
 
         anim = animation.FuncAnimation(
             plt.gcf(), animate, frames=len(frames), interval=50
