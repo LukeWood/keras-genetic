@@ -131,6 +131,7 @@ Before the v1.0.0 release I'd like to accomplish the following tasks:
 - implement unit tests for each component
 - support random seeding
 - thoroughly review the API per Keras core API design guidelines
+- support custom initial populations (i.e. to model after a human imitation model)
 
 Once all of these tasks are complete, I will release keras-genetic v1.0.0.
 
