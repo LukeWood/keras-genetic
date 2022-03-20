@@ -1,10 +1,6 @@
 """search is the primary entrypoint to keras-genetic."""
 
-from typing import List
-
-import numpy as np
 import tqdm
-from tensorflow import keras
 
 from keras_genetic import core
 from keras_genetic.search.result import SearchResult
@@ -16,7 +12,7 @@ def search(
     population_size,
     n_parents_from_population,
     evaluator,
-    breeder=None,
+    breeder,
     return_best=1,
     callbacks=(),
 ):
@@ -36,12 +32,11 @@ def search(
             of the individual.  If you wish to minimize a loss, simply
             invert the result of your loss function.
         breeder: `keras_genetic.Breeder` instance (or callable) used to produce
-            new offspring.  Defaults to `RandomFeatureMutationBreeder`.
+            new offspring
         return_best: number of `keras_genetic.Individual` to return.
     Returns:
         `keras_genetic.search.SearchResult` object containing all of the search results
     """
-    breeder = breeder or keras_genetic.CompletelyRandomBreeder()
     search_manager = _SearchManager(
         generations,
         population_size,

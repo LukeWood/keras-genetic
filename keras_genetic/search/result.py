@@ -1,7 +1,3 @@
-import numpy as np
-from tensorflow import keras
-
-
 class SearchResult:
     """SearchResult contains the results for a search call."""
 

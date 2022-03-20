@@ -1,8 +1,6 @@
 import random
 
 import numpy as np
-from tensorflow import keras
-from tensorflow.keras import initializers
 
 from keras_genetic import core
 from keras_genetic.breeder.breeder import Breeder

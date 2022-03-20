@@ -1,6 +1,5 @@
 import gym
 import numpy as np
-from gif_callback import CartpoleGifCallback
 from tensorflow import keras
 from tensorflow.keras import layers
 

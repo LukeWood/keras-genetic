@@ -42,7 +42,7 @@ class CartpoleGifCallback(keras_genetic.callbacks.Callback):
 
         self.save_frames_as_gif(
             frames,
-            path=f"./artifacts/cartpole/",
+            path="./artifacts/cartpole/",
             filename=f"cartpole-generation-{generation}.gif",
             generation=generation,
         )

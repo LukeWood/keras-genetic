@@ -1,8 +1,3 @@
-import random
-
-from tensorflow import keras
-from tensorflow.keras import initializers
-
 import keras_genetic
 
 
