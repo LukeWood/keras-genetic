@@ -32,6 +32,7 @@ def evaluate_cartpole(individual: keras_genetic.Individual):
 
     return total_reward
 
+
 results = keras_genetic.search(
     # computational cost is evaluate*generations*population_size
     model=model,
