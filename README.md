@@ -7,8 +7,6 @@
 
 *⚠️ Keras Genetic is Operating pre-release.⚠️*
 
-*⚠️ The API is currently unstable and will regularly change until the v1.0.0 release. ⚠️*
-
 Keras Genetic allows you to easily train Keras models using genetic algorithms.
 
 *Quick Links:*
