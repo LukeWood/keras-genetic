@@ -1,5 +1,11 @@
 # Keras Genetic
 
+[![](https://github.com/lukewood/keras-genetic/workflows/Tests/badge.svg?branch=master)](https://github.com/lukewood/keras-genetic/actions?query=workflow%3ATests+branch%3Amaster)
+![Python](https://img.shields.io/badge/python-v3.7.0+-success.svg)
+![Tensorflow](https://img.shields.io/badge/tensorflow-v2.8.0+-success.svg)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/lukewood/keras-genetic/issues)
+
+
 *⚠️ Keras Genetic is Operating pre-release.  The API is currently unstable and will regularly change until the v1.0.0 release. ⚠️*
 
 Keras Genetic allows you to easily train Keras models using genetic algorithms.
@@ -104,3 +110,12 @@ Check out the [examples](examples/) and guides (Coming Soon!).
 
 ## Quickstart
 For now, the [MNIST Example](examples/mnist/mnist.py) serves as the Quickstart guide.
+
+
+# Thanks!
+
+Thank you to all of our wonderful contributors!
+
+<a href="https://github.com/lukewood/keras-genetic/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=lukewood/keras-genetic" />
+</a>
