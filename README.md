@@ -104,3 +104,12 @@ Check out the [examples](examples/) and guides (Coming Soon!).
 
 ## Quickstart
 For now, the [MNIST Example](examples/mnist/mnist.py) serves as the Quickstart guide.
+
+
+# Thanks!
+
+Thank you to all of our wonderful contributors!
+
+<a href="https://github.com/lukewood/keras-genetic/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=lukewood/keras-genetic" />
+</a>
