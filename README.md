@@ -133,12 +133,15 @@ Before the v1.0.0 release I'd like to accomplish the following tasks:
 Once all of these tasks are complete, I will release keras-genetic v1.0.0.
 
 ## Citation
+
+```bibtex
 @misc{wood2022kerasgenetic,
 	title        = {Keras Genetic},
 	author       = {Luke Wood},
 	year         = 2022,
 	howpublished = {\url{https://github.com/lukewood/keras-genetic}}
 }
+```
 
 ## Thanks!
 
