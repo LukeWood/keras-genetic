@@ -5,6 +5,8 @@ from tensorflow.keras import layers
 
 import keras_genetic
 
+from gif_callback import CartpoleGifCallback
+
 env = gym.make("CartPole-v0")
 
 num_inputs = 4
@@ -16,30 +18,30 @@ hidden = layers.Dense(num_hidden, activation="relu")(inputs)
 action = layers.Dense(num_actions, activation="softmax")(hidden)
 model = keras.Model(inputs, action)
 
-
 def evaluate_cartpole(individual: keras_genetic.Individual):
     model = individual.load_model()
     state = env.reset()
     total_reward = 0
-    for _ in range(1000):
+    for _ in range(500):
         action_probs = model(np.expand_dims(state, axis=0))
         action = np.argmax(np.squeeze(action_probs))
         state, reward, done, _ = env.step(action)
         total_reward += reward
         if done:
             break
-    return total_reward
 
+    return total_reward
 
 results = keras_genetic.search(
     # computational cost is evaluate*generations*population_size
     model=model,
     evaluator=evaluate_cartpole,
-    generations=20,
-    population_size=50,
-    n_parents_from_population=5,
+    generations=10,
+    population_size=10,
+    n_parents_from_population=3,
     breeder=keras_genetic.breeder.TwoParentMutationBreeder(),
     return_best=1,
+    callbacks=[CartpoleGifCallback(env)]
 )
 
 model = results.best.load_model()

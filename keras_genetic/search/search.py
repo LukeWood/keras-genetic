@@ -18,6 +18,7 @@ def search(
     evaluator,
     breeder=None,
     return_best=1,
+    callbacks=(),
 ):
     """`search()` is the primary entrypoint to keras-genetic.
 
@@ -48,6 +49,7 @@ def search(
         breeder,
         evaluator,
         return_best,
+        callbacks
     )
     return search_manager.run(model)
 
@@ -61,14 +63,15 @@ class _SearchManager:
         breeder,
         evaluator,
         return_best,
+        callbacks
     ):
-        self.generation = 0
         self.generations = generations
         self.population_size = population_size
         self.n_parents_from_population = n_parents_from_population
         self.breeder = breeder
         self.evaluator = evaluator
         self.return_best = return_best
+        self.callbacks = callbacks
 
     def initial_generation(self, model, dummy_individual):
         return [
@@ -88,13 +91,20 @@ class _SearchManager:
         population = self.initial_generation(model, initial_parent)
         parents = []
 
-        for _generation in tqdm.tqdm(range(self.generations)):
+        for g in tqdm.tqdm(range(self.generations)):
+
+            for callback in self.callbacks:
+                callback.on_generation_begin(g, SearchResult(population))
+
             parents = self.run_generation(
                 population, parents, keep=self.n_parents_from_population
             )
             population = self.breeder.population_from_parents(
                 parents, self.population_size
             )
+
+            for callback in self.callbacks:
+                callback.on_generation_end(g, SearchResult(parents))
 
         final = self.run_generation(population, [], keep=self.return_best)
         return SearchResult(final)
