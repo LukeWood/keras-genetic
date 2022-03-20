@@ -28,7 +28,6 @@ README = (HERE / "README.md").read_text()
 setup(
     name="keras-genetic",
     description="Train keras models with genetic algorithms.",
-    version="0.0.1",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/lukewood/keras-genetic",
