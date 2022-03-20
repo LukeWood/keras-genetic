@@ -21,13 +21,13 @@ def evaluate_cartpole(individual: keras_genetic.Individual):
     model = individual.load_model()
     state = env.reset()
     total_reward = 0
-    for _ in range(500):
+
+    done = False
+    while not done:
         action_probs = model(np.expand_dims(state, axis=0))
         action = np.argmax(np.squeeze(action_probs))
         state, reward, done, _ = env.step(action)
         total_reward += reward
-        if done:
-            break
 
     return total_reward
 
@@ -36,10 +36,10 @@ results = keras_genetic.search(
     # computational cost is evaluate*generations*population_size
     model=model,
     evaluator=evaluate_cartpole,
-    generations=5,
-    population_size=10,
+    generations=20,
+    population_size=50,
     n_parents_from_population=3,
-    breeder=keras_genetic.breeder.TwoParentMutationBreeder(),
+    breeder=keras_genetic.breeder.MutationBreeder(),
     return_best=1,
     # note: the CartpoleGifCallback is super expensive because of the video
     # processing.  Only enable it if you really want to create the gifs.
@@ -47,10 +47,10 @@ results = keras_genetic.search(
 )
 
 model = results.best.load_model()
+print(f"search() complete.  Best score: {results.best.score}")
 
 state = env.reset()
-done = False
-while not done:
+for _ in range(3000):
     env.render()
     action_probs = model(np.expand_dims(state, axis=0))
     action = np.argmax(np.squeeze(action_probs))
