@@ -6,6 +6,7 @@
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/lukewood/keras-genetic/issues)
 
 *⚠️ Keras Genetic is Operating pre-release.⚠️*
+
 *⚠️ The API is currently unstable and will regularly change until the v1.0.0 release. ⚠️*
 
 Keras Genetic allows you to easily train Keras models using genetic algorithms.
