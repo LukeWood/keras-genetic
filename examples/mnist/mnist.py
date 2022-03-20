@@ -49,7 +49,7 @@ results = keras_genetic.search(
     model=model,
     # computational cost is evaluate*generations*population_size
     evaluator=evaluate_accuracy,
-    generations=10,
+    generations=100,
     population_size=50,
     n_parents_from_population=5,
     breeder=keras_genetic.breeder.MutationBreeder(),
