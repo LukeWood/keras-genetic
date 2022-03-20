@@ -18,7 +18,7 @@ class NParentMutationBreeder(Breeder):
         super().__init__(**kwargs)
         if n < 1:
             raise ValueError(
-                f"NParentMutationBreeder.__init__() received " "n={n}.  Want n > 1"
+                f"NParentMutationBreeder.__init__() received n={n}.  Want n > 1"
             )
         self.n = n
         self.keep_probability = keep_probability
