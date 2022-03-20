@@ -49,7 +49,7 @@ def search(
         breeder,
         evaluator,
         return_best,
-        callbacks
+        callbacks,
     )
     return search_manager.run(model)
 
@@ -63,7 +63,7 @@ class _SearchManager:
         breeder,
         evaluator,
         return_best,
-        callbacks
+        callbacks,
     ):
         self.generations = generations
         self.population_size = population_size

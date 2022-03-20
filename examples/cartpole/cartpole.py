@@ -1,11 +1,10 @@
 import gym
 import numpy as np
+from gif_callback import CartpoleGifCallback
 from tensorflow import keras
 from tensorflow.keras import layers
 
 import keras_genetic
-
-from gif_callback import CartpoleGifCallback
 
 env = gym.make("CartPole-v0")
 
@@ -17,6 +16,7 @@ inputs = layers.Input(shape=(num_inputs,))
 hidden = layers.Dense(num_hidden, activation="relu")(inputs)
 action = layers.Dense(num_actions, activation="softmax")(hidden)
 model = keras.Model(inputs, action)
+
 
 def evaluate_cartpole(individual: keras_genetic.Individual):
     model = individual.load_model()
@@ -32,6 +32,7 @@ def evaluate_cartpole(individual: keras_genetic.Individual):
 
     return total_reward
 
+
 results = keras_genetic.search(
     # computational cost is evaluate*generations*population_size
     model=model,
@@ -41,7 +42,7 @@ results = keras_genetic.search(
     n_parents_from_population=3,
     breeder=keras_genetic.breeder.TwoParentMutationBreeder(),
     return_best=1,
-    callbacks=[CartpoleGifCallback(env)]
+    callbacks=[CartpoleGifCallback(env)],
 )
 
 model = results.best.load_model()
