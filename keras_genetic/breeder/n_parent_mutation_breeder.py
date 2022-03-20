@@ -16,6 +16,10 @@ class NParentMutationBreeder(Breeder):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        if n < 1:
+            raise ValueError(
+                f"NParentMutationBreeder.__init__() received " "n={n}.  Want n > 1"
+            )
         self.n = n
         self.keep_probability = keep_probability
 
@@ -39,4 +43,4 @@ class NParentMutationBreeder(Breeder):
 
             offspring_weights.append(np.array(result).reshape(shape))
 
-        return core.Individual(offspring_weights, model=mother.model)
+        return core.Individual(offspring_weights, model=parents[0].model)
