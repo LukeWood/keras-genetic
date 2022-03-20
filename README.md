@@ -43,7 +43,9 @@ any use case you may come up with.
 As more generations occur, the quality of the models will improve.  For example,
 look at the following models from the [CartPole example](examples/cartpole/):
 
-https://user-images.githubusercontent.com/12191303/159143605-e2affc3e-5db6-44cb-9759-9655c1274f8a.mp4
+<video width=400 markdown="1">
+    <source src="artifacts/cartpole/combined.mp4">
+</video>
 
 There are three core components of the API that must be used to get started:
 
