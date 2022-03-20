@@ -142,11 +142,3 @@ Once all of these tasks are complete, I will release keras-genetic v1.0.0.
 	howpublished = {\url{https://github.com/lukewood/keras-genetic}}
 }
 ```
-
-## Thanks!
-
-Thank you to all of our wonderful contributors!
-
-<a href="https://github.com/lukewood/keras-genetic/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=lukewood/keras-genetic" />
-</a>
