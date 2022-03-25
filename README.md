@@ -95,7 +95,7 @@ individuals.  The details as to how each `Breeder` produces new individuals are
 unique to the  breeder, but as a general rule some attributes of the parent are
 preserved while some new attributes are randomly sampled.
 
-For most users, the `TwoParentMutationBreeder` is sufficiently effective.
+For most users, the `MutationBreeder` is sufficiently effective.
 
 ### search()
 
