@@ -108,7 +108,7 @@ Check out the [examples](examples/) and guides (Coming Soon!).
 
 ## Quickstart
 
-For now, the [MNIST Example](examples/mnist/mnist.py) serves as the Quickstart guide.
+For now, the [Cartpole Example](examples/cartpole/cartpole.py) serves as the Quickstart guide.
 
 
 ## Roadmap
