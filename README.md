@@ -5,10 +5,9 @@
 ![Tensorflow](https://img.shields.io/badge/tensorflow-v2.8.0+-success.svg)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/lukewood/keras-genetic/issues)
 
-Keras Genetic allows you to easily train Keras models using genetic algorithms.  Genetic algorithms can be used to train small controllers to perform specialized tasks.  Below, a genetic algorithm was used to flawlessly solve the CartPole environment.
+Keras Genetic allows you to easily train Keras models using genetic algorithms.  Genetic algorithms can be used to train small controllers to perform specialized tasks.  Below, a genetic algorithm was used to flawlessly solve the CartPole environment.  _This is an animated GIF not a static image_.
 
 ![Cartpole](artifacts/cartpole/gym_animation.gif)
-_This is an animated GIF not a static image_
 
 *Quick Links:*
 
