@@ -125,7 +125,6 @@ Check out the [examples](examples/) and guides (Coming Soon!).
 
 For now, the [Cartpole Example](examples/cartpole/cartpole.py) serves as the Quickstart guide.
 
-
 ## Roadmap
 
 I'd like to accomplish the following tasks:
