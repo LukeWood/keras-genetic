@@ -5,8 +5,6 @@
 ![Tensorflow](https://img.shields.io/badge/tensorflow-v2.8.0+-success.svg)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/lukewood/keras-genetic/issues)
 
-*⚠️ Keras Genetic is pre-release ⚠️*
-
 Keras Genetic allows you to easily train Keras models using genetic algorithms.
 
 *Quick Links:*
@@ -17,22 +15,21 @@ Keras Genetic allows you to easily train Keras models using genetic algorithms.
 - [Quickstart](#Quickstart)
 
 ## Background
-Keras provides an elegant API for creating neural networks.  Typically, the
-neural network weights are optimized by minimizing a loss function through the
-process of gradient descent.
+KerasGenetic allows you to leverage the elegent modeling API Keras while performing
+training with genetic algorithms.  Typically, Keras neural network weights are optimized
+by minimizing a loss function through the process of gradient descent.
 
 Keras Genetic takes a different approach to weight optimization by leveraging
 genetic algorithms.  Genetic algorithms allow you to optimize a neural network
 without in scenarios where there is no information about the loss landscape.
 
+Genetic algorithms can be used to train neural networks in niche cases where you need to
+train a specialized controller with <1000 parameters.
+
 Some areas where genetic algorithms are applied today:
 
 - [Reinforcement learning (WorldModels)](https://worldmodels.github.io/)
 - Finance
-- Computer architecture
-- code breaking
-- hardware bug searching
-- and many more!
 
 ## Overview
 
