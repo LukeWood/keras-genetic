@@ -37,6 +37,7 @@ setup(
     install_requires=[],
     extras_require={
         "tests": ["flake8", "isort", "black", "pytest"],
+        "examples": ["gym", "pygame"],
     },
     classifiers=[
         "Programming Language :: Python",

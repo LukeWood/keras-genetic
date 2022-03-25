@@ -4,7 +4,7 @@ import tqdm
 
 from keras_genetic import core
 from keras_genetic.search.result import SearchResult
-
+from keras_genetic.callbacks import ProgBarLogger
 
 def search(
     model,
@@ -14,6 +14,7 @@ def search(
     evaluator,
     breeder,
     return_best=1,
+    verbose=1,
     callbacks=(),
 ):
     """`search()` is the primary entrypoint to keras-genetic.
@@ -28,7 +29,7 @@ def search(
         population_size: size of the population.
         n_parents_from_population: number of parents to keep from population.
         evaluator: `keras_genetic.Evaluator` instance, or callable.  Must take
-            a model instance and return a number indicating the fitness score
+            a model instance and return a number indicating the fitness
             of the individual.  If you wish to minimize a loss, simply
             invert the result of your loss function.
         breeder: `keras_genetic.Breeder` instance (or callable) used to produce
@@ -37,6 +38,9 @@ def search(
     Returns:
         `keras_genetic.search.SearchResult` object containing all of the search results
     """
+    callbacks = list(callbacks)
+    if verbose == 1:
+        callbacks = callbacks + [ProgBarLogger(generations)]
     search_manager = _SearchManager(
         generations,
         population_size,
@@ -76,7 +80,7 @@ class _SearchManager:
 
     def run_generation(self, population, parents, keep):
         for individual in population:
-            individual.score = self.evaluator(individual)
+            individual.fitness = self.evaluator(individual)
 
         result_population = sorted(population + parents, reverse=True)
         return result_population[:keep]
@@ -86,7 +90,7 @@ class _SearchManager:
         population = self.initial_generation(model, initial_parent)
         parents = []
 
-        for g in tqdm.tqdm(range(self.generations)):
+        for g in range(self.generations):
 
             for callback in self.callbacks:
                 callback.on_generation_begin(g, SearchResult(population))

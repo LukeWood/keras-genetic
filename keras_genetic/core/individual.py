@@ -4,17 +4,17 @@ class Individual:
     Args:
         weights: array of np.array weights.
         model: keras model to load the weights into.
-        score: score the individual received.
+        fitness: fitness the individual received.
 
     Attributes:
         weights: array of np.arrays representing weights of the neural network.
-        score: score the individual received during training.
+        fitness: fitness the individual received during training.
     """
 
-    def __init__(self, weights, model, score=None):
+    def __init__(self, weights, model, fitness=None):
         self.weights = weights
         self.model = model
-        self.score = score
+        self.fitness = fitness
 
     def load_model(self):
         """load_model() prepares the keras model for use.
@@ -29,7 +29,7 @@ class Individual:
         return self.model
 
     def __gt__(self, other):
-        return self.score > other.score
+        return self.fitness > other.fitness
 
     def __lt__(self, other):
-        return self.score < other.score
+        return self.fitness < other.fitness

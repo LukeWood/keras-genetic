@@ -5,7 +5,7 @@ from tensorflow.keras import layers
 
 import keras_genetic
 
-env = gym.make("CartPole-v0")
+env = gym.make("CartPole-v1")
 
 num_inputs = 4
 num_actions = 2
@@ -37,7 +37,7 @@ results = keras_genetic.search(
     model=model,
     evaluator=evaluate_cartpole,
     generations=20,
-    population_size=50,
+    population_size=10,
     n_parents_from_population=3,
     breeder=keras_genetic.breeder.MutationBreeder(),
     return_best=1,
@@ -47,7 +47,7 @@ results = keras_genetic.search(
 )
 
 model = results.best.load_model()
-print(f"search() complete.  Best score: {results.best.score}")
+print(f"search() complete.  Best fitness: {results.best.fitness}")
 
 state = env.reset()
 for _ in range(3000):

@@ -1,1 +1,2 @@
 from keras_genetic.callbacks.callback import Callback
+from keras_genetic.callbacks.prog_bar_logger import ProgBarLogger
