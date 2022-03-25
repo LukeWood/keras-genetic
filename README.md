@@ -24,8 +24,7 @@ Keras Genetic takes a different approach to weight optimization by leveraging
 genetic algorithms.  Genetic algorithms allow you to optimize a neural network
 without in scenarios where there is no information about the loss landscape.
 
-Genetic algorithms can be used to train neural networks in niche cases where you need to
-train a specialized controller with <1000 parameters.
+Genetic algorithms can be used to train neural networks in niche cases to train specialized controllers with <1000 parameters based on a fitness function.
 
 Some areas where genetic algorithms are applied today:
 
