@@ -7,7 +7,7 @@
 
 Keras Genetic allows you to easily train Keras models using genetic algorithms.  Genetic algorithms can be used to train small controllers to perform specialized tasks.  Below, a genetic algorithm was used to flawlessly solve the CartPole environment.  _This is an animated GIF not a static image_.
 
-<img src="artifacts/cartpole/gym_animation.gif" width=400>
+<center><img src="artifacts/cartpole/gym_animation.gif" width=400></center>
 
 *Quick Links:*
 
