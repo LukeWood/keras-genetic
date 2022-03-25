@@ -9,6 +9,7 @@ Keras Genetic allows you to easily train Keras models using genetic algorithms.
 
 *Quick Links:*
 
+- [Installation](#Installation)
 - [Cartpole](examples/cartpole/cartpole.py)
 - [MNIST Image Classification](examples/mnist/mnist.py)
 - [Overview](#Overview)
@@ -30,6 +31,19 @@ Some areas where genetic algorithms are applied today:
 
 - [Reinforcement learning (WorldModels)](https://worldmodels.github.io/)
 - Finance
+
+## Installation
+You can install `keras-genetic` from `PyPi`:
+
+```bash
+pip install keras-genetic
+```
+
+Or directly from GitHub:
+
+```bash
+pip install git+https://github.com/lukewood/keras-genetic
+```
 
 ## Overview
 
