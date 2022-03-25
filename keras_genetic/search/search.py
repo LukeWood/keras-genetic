@@ -3,8 +3,9 @@
 import tqdm
 
 from keras_genetic import core
-from keras_genetic.search.result import SearchResult
 from keras_genetic.callbacks import ProgBarLogger
+from keras_genetic.search.result import SearchResult
+
 
 def search(
     model,
@@ -38,6 +39,8 @@ def search(
     Returns:
         `keras_genetic.search.SearchResult` object containing all of the search results
     """
+    if not (isinstance(callbacks, list) or isinstance(callbacks, tuple)):
+        callbacks = [callbacks]
     callbacks = list(callbacks)
     if verbose == 1:
         callbacks = callbacks + [ProgBarLogger(generations)]
@@ -50,7 +53,13 @@ def search(
         return_best,
         callbacks,
     )
-    return search_manager.run(model)
+    result = search_manager.run(model)
+    if verbose == 1:
+        print(
+            f"🎉 search() complete in {search_manager.generations} generations, "
+            f"best fitness score: {result.best.fitness} 🎉"
+        )
+    return result
 
 
 class _SearchManager:
@@ -71,6 +80,10 @@ class _SearchManager:
         self.evaluator = evaluator
         self.return_best = return_best
         self.callbacks = callbacks
+        self.should_stop = False
+
+        for cb in self.callbacks:
+            cb._manager = self
 
     def initial_generation(self, model, dummy_individual):
         return [
@@ -78,11 +91,15 @@ class _SearchManager:
             for _ in range(self.population_size)
         ]
 
-    def run_generation(self, population, parents, keep):
-        for individual in population:
-            individual.fitness = self.evaluator(individual)
+    def stop(self):
+        self.should_stop = True
 
-        result_population = sorted(population + parents, reverse=True)
+    def run_generation(self, population, keep):
+        for individual in population:
+            if individual.fitness is None:
+                individual.fitness = self.evaluator(individual)
+
+        result_population = sorted(population, reverse=True)
         return result_population[:keep]
 
     def run(self, model):
@@ -91,19 +108,25 @@ class _SearchManager:
         parents = []
 
         for g in range(self.generations):
-
             for callback in self.callbacks:
                 callback.on_generation_begin(g, SearchResult(population))
 
             parents = self.run_generation(
-                population, parents, keep=self.n_parents_from_population
-            )
-            population = self.breeder.population_from_parents(
-                parents, self.population_size
+                population, keep=self.n_parents_from_population
             )
 
             for callback in self.callbacks:
                 callback.on_generation_end(g, SearchResult(parents))
+            self.generations = g + 1
+            if self.should_stop:
+                population = parents
+                break
 
-        final = self.run_generation(population, [], keep=self.return_best)
+            population = parents + self.breeder.population_from_parents(
+                parents, self.population_size
+            )
+
+
+
+        final = self.run_generation(population, keep=self.return_best)
         return SearchResult(final)

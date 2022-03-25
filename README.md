@@ -122,10 +122,9 @@ Before the v1.0.0 release I'd like to accomplish the following tasks:
 - ✅ support a callbacks API
 - ✅ end to end MNIST example
 - ✅ end to end CartPole example
-- implement a ProgBarLogger
+- ✅ implement a ProgBarLogger
 - have at least 3 distinct breeders
 - autogenerate documentation
-- generate an end to end CartPole training gif
 - thoroughly document each component
 - offer implementations of  the most effective genetic algorithms
 - implement unit tests for each component
@@ -133,7 +132,7 @@ Before the v1.0.0 release I'd like to accomplish the following tasks:
 - thoroughly review the API per Keras core API design guidelines
 - support custom initial populations (i.e. to model after a human imitation model)
 - support keep_probability schedules
-- implement EarlyStopping callback (can be used in CartPole example)
+- ✅ implement EarlyStopping callback (can be used in CartPole example)
 
 Once all of these tasks are complete, I will release keras-genetic v1.0.0.
 

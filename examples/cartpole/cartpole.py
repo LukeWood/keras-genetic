@@ -41,13 +41,12 @@ results = keras_genetic.search(
     n_parents_from_population=3,
     breeder=keras_genetic.breeder.MutationBreeder(),
     return_best=1,
+    callbacks = [keras_genetic.callbacks.EarlyStopping(goal=500.0)]
     # note: the CartpoleGifCallback is super expensive because of the video
     # processing.  Only enable it if you really want to create the gifs.
     # callbacks=[CartpoleGifCallback(env)],
 )
-
 model = results.best.load_model()
-print(f"search() complete.  Best fitness: {results.best.fitness}")
 
 state = env.reset()
 for _ in range(3000):
