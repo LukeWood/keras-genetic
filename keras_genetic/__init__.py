@@ -3,8 +3,4 @@ from keras_genetic.core.individual import Individual
 from keras_genetic.initializers import Initializer
 from keras_genetic.search import search
 
-"""
-.. include:: README.md
-"""
-
 __version__ = "0.0.3"

@@ -114,9 +114,9 @@ Check out the [examples](examples/) and guides (Coming Soon!).
 For now, the [MNIST Example](examples/mnist/mnist.py) serves as the Quickstart guide.
 
 
-## v1.0.0 Release Checklist
+## Roadmap
 
-Before the v1.0.0 release I'd like to accomplish the following tasks:
+I'd like to accomplish the following tasks:
 
 - ✅ stabilize the base API
 - ✅ support a callbacks API
@@ -134,7 +134,7 @@ Before the v1.0.0 release I'd like to accomplish the following tasks:
 - support custom initial populations (i.e. to model after a human imitation model)
 - support keep_probability schedules
 
-Once all of these tasks are complete, I will release keras-genetic v1.0.0.
+Feel free to contribute any of these.
 
 ## Citation
 
