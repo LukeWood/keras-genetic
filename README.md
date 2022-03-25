@@ -7,6 +7,8 @@
 
 Keras Genetic allows you to easily train Keras models using genetic algorithms.
 
+![Cartpole](artifacts/cartpole/gym_animation.gif)
+
 *Quick Links:*
 
 - [Installation](#Installation)

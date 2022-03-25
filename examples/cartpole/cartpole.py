@@ -49,8 +49,9 @@ results = keras_genetic.search(
 model = results.best.load_model()
 
 state = env.reset()
-for _ in range(3000):
+for _ in range(1000):
     env.render()
     action_probs = model(np.expand_dims(state, axis=0))
     action = np.argmax(np.squeeze(action_probs))
     state, reward, done, _ = env.step(action)
+env.close()
