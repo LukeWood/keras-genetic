@@ -1,7 +1,5 @@
 """search is the primary entrypoint to keras-genetic."""
 
-import tqdm
-
 from keras_genetic import core
 from keras_genetic.callbacks import ProgBarLogger
 from keras_genetic.search.result import SearchResult
