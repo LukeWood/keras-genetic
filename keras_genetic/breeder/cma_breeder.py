@@ -3,8 +3,8 @@ import numpy as np
 import keras_genetic
 
 
-class CmaEsBreeder(keras_genetic.Breeder):
-    """CMaEsBreeder produces offspring using the CMA-ES Algorithm.
+class CMABreeder(keras_genetic.Breeder):
+    """CMABreeder produces offspring using the CMA-ES Algorithm.
 
     Covariance matrix adaptation evolution strategy (CMA-ES) is an evoluationary
     algoirthm for use in optimization problems.
