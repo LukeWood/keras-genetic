@@ -44,13 +44,48 @@ class CMABreeder(keras_genetic.Breeder):
 
         # What the hell is the point of self.b?  Stolen from matlab code - isn't it just
         # an identity matrix?
-        sample = np.matmul(np.matmul(self.sigma, self.b) * np.multiply(
-            self.d, np.random.normal((self.n, 1))
-        ))
-        return self.mean + sample
+        sample = np.matmul(
+            np.matmul(self.sigma, self.b)
+            * np.multiply(self.d, np.random.normal((self.n, 1)))
+        )
+        weights = self.mean + sample
 
-    def update_state(self, parents):
-        """`update_state(parents)` method updates the state of the breeder class.
+        # Restructure weights to fit in the passed Keras model
+        weights = weights.flatten()
+        n_weights = weights.shape[0]
+
+        mother = self._template
+
+        idx = 0
+
+        offspring_weights = []
+        for template_weight in mother.weights:
+            shape = template_weight.shape
+            template_weight = template_weight.flatten()
+
+            result = []
+            for i in range(template_weight.shape[0]):
+                if idx > n_weights:
+                    raise ValueError(
+                        "Weights exhausted during model population.  Did you pass "
+                        "the correct value for `n`?  `n` must match "
+                        f"dim(model.get_weights().flatten())."
+                    )
+                result.append(weights[idx])
+                idx += 1
+
+            offspring_weights.append(np.array(result).reshape(shape))
+
+        if idx != n_weights:
+            raise ValueError(
+                "Not all weights were used when producing an offspring.  Did you pass "
+                "the correct value for `n`?  `n` must match "
+                "dim(model.get_weights().flatten())"
+            )
+        return core.Individual(offspring_weights, model=template_model)
+
+    def update_state(self, generation):
+        """`update_state(generation)` method updates the state of the breeder class.
 
         In pseudocode:
 
@@ -70,4 +105,6 @@ class CMABreeder(keras_genetic.Breeder):
         // update step-size using isotropic path length
         sigma = update_sigma(sigma, norm(p_sigma))
         """
+        self._template = generation[0]
+
         pass
