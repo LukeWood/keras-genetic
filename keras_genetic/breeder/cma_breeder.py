@@ -37,8 +37,8 @@ class CMABreeder(Breeder):
         self.weights = np.log(self.recombination_parents + 1/2)-np.log(np.arange(1, self.recombination_parents))
         self.recombination_effectiveness = (np.sum(self.weights)**2) / np.sum(np.square(self.weights))
 
-        self.path_c = np.zeros((n, 1))
-        self.path_sigma = np.zeros((n, 1))
+        self.covariance_path = np.zeros((n, 1))
+        self.sigma_path = np.zeros((n, 1))
 
         self.scaling = np.ones((n, 1))
         self.covariance_matrix = np.diag(np.square(self.scaling))
@@ -60,41 +60,8 @@ class CMABreeder(Breeder):
         In reality, we also need to reshape the weights matrix to also fit the spec of
         parents[0].
         """
-        sample = self.sigma * np.multiply(self.scaling, np.random.normal((self.n,)))
-        weights = self.mean + sample
-
-        # Restructure weights to fit in the passed Keras model
-        weights = weights.flatten()
-        n_weights = weights.shape[0]
-
-        mother = self._template
-
-        idx = 0
-
-        offspring_weights = []
-        for template_weight in mother.weights:
-            shape = template_weight.shape
-            template_weight = template_weight.flatten()
-
-            result = []
-            for i in range(template_weight.shape[0]):
-                if idx > n_weights:
-                    raise ValueError(
-                        "Weights exhausted during model population.  Did you pass "
-                        "the correct value for `n`?  `n` must match "
-                        f"dim(model.get_weights().flatten())."
-                    )
-                result.append(weights[idx])
-                idx += 1
-            offspring_weights.append(np.array(result).reshape(shape))
-
-        if idx != n_weights:
-            raise ValueError(
-                "Not all weights were used when producing an offspring.  Did you pass "
-                "the correct value for `n`?  `n` must match "
-                "dim(model.get_weights().flatten())"
-            )
-        return core.Individual(weights=offspring_weights, model=mother.model)
+        weights = self._sample_weights()
+        return self._format_offspring(weights, self._template)
 
     def update_state(self, generation):
         """`update_state(generation)` method updates the state of the breeder class.
@@ -121,6 +88,53 @@ class CMABreeder(Breeder):
         self._template = generation[0]
 
         mean_old = self.mean
-        #mean =
+        self.mean = self._update_mean()
+        self.sigma_path = self._update_sigma_path()
+        self.covariance_path = self._update_covariance_path()
+        self.covariance_matrix = self._update_covariance_matrix()
+        self.sigma = self._update_sigma()
 
-        pass
+    def _update_mean(self):
+        return self.mean
+    def _update_sigma_path(self):
+        return self.sigma_path
+    def _update_covariance_path(self):
+        return self.covariance_path
+    def _update_covariance_matrix(self):
+        return self.covariance_matrix
+    def _update_sigma(self):
+        return self.sigma
+
+    def _sample_weights(self):
+        sample = self.sigma * np.multiply(self.scaling, np.random.normal((self.n,)))
+        weights = self.mean + sample
+        return weights.flatten()
+
+    def _format_offspring(self, weights, mother):
+        n_weights = weights.shape[0]
+
+        idx = 0
+        offspring_weights = []
+        for template_weight in mother.weights:
+            shape = template_weight.shape
+            template_weight = template_weight.flatten()
+
+            result = []
+            for i in range(template_weight.shape[0]):
+                if idx > n_weights:
+                    raise ValueError(
+                        "Weights exhausted during model population.  Did you pass "
+                        "the correct value for `n`?  `n` must match "
+                        f"dim(model.get_weights().flatten())."
+                    )
+                result.append(weights[idx])
+                idx += 1
+            offspring_weights.append(np.array(result).reshape(shape))
+
+        if idx != n_weights:
+            raise ValueError(
+                "Not all weights were used when producing an offspring.  Did you pass "
+                "the correct value for `n`?  `n` must match "
+                "dim(model.get_weights().flatten())"
+            )
+        return core.Individual(weights=offspring_weights, model=mother.model)
