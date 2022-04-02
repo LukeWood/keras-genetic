@@ -9,9 +9,9 @@ def search(
     model,
     generations,
     population_size,
-    n_parents_from_population,
     evaluator,
     breeder,
+    initial_population=None,
     return_best=1,
     verbose=1,
     callbacks=(),
@@ -26,14 +26,17 @@ def search(
         model: the keras.Model to run the seach over.
         generations: number of generations to run the genetic algorithm for.
         population_size: size of the population.
-        n_parents_from_population: number of parents to keep from population.
         evaluator: `keras_genetic.Evaluator` instance, or callable.  Must take
             a model instance and return a number indicating the fitness
             of the individual.  If you wish to minimize a loss, simply
             invert the result of your loss function.
         breeder: `keras_genetic.Breeder` instance (or callable) used to produce
-            new offspring
+            new offspring.
         return_best: number of `keras_genetic.Individual` to return.
+        verbose: verbosity to use.  1 for logging, 0 for silent.
+        initial_population: an initial population of `keras_genetic.Individual` to use
+            in training.  If `None`, a random population is created.
+        callbacks: list of `keras_genetic.Callback` for use in training.
     Returns:
         `keras_genetic.search.SearchResult` object containing all of the search results
     """
@@ -45,7 +48,7 @@ def search(
     search_manager = _SearchManager(
         generations,
         population_size,
-        n_parents_from_population,
+        initial_population,
         breeder,
         evaluator,
         return_best,
@@ -65,15 +68,15 @@ class _SearchManager:
         self,
         generations,
         population_size,
-        n_parents_from_population,
+        initial_population,
         breeder,
         evaluator,
         return_best,
         callbacks,
     ):
         self.generations = generations
+        self.initial_population = initial_population
         self.population_size = population_size
-        self.n_parents_from_population = n_parents_from_population
         self.breeder = breeder
         self.evaluator = evaluator
         self.return_best = return_best
@@ -92,37 +95,30 @@ class _SearchManager:
     def stop(self):
         self.should_stop = True
 
-    def run_generation(self, population, keep):
-        for individual in population:
-            if individual.fitness is None:
-                individual.fitness = self.evaluator(individual)
-
-        result_population = sorted(population, reverse=True)
-        return result_population[:keep]
-
     def run(self, model):
         initial_parent = core.Individual(model.get_weights(), model)
-        population = self.initial_generation(model, initial_parent)
+        population = self.initial_population or self.initial_generation(
+            model, initial_parent
+        )
         parents = []
 
         for g in range(self.generations):
             for callback in self.callbacks:
                 callback.on_generation_begin(g, SearchResult(population))
 
-            parents = self.run_generation(
-                population, keep=self.n_parents_from_population
-            )
+            for individual in population:
+                if individual.fitness is None:
+                    individual.fitness = self.evaluator(individual)
+
+            population = sorted(population, reverse=True)
+            self.breeder.update_state(population)
 
             for callback in self.callbacks:
-                callback.on_generation_end(g, SearchResult(parents))
-            self.generations = g + 1
-            if self.should_stop:
-                population = parents
+                callback.on_generation_end(g, SearchResult(population))
+
+            if self.should_stop or (g == self.generations - 1):
                 break
 
-            population = parents + self.breeder.population_from_parents(
-                parents, self.population_size
-            )
+            population = self.breeder.population(self.population_size)
 
-        final = self.run_generation(population, keep=self.return_best)
-        return SearchResult(final)
+        return SearchResult(population)

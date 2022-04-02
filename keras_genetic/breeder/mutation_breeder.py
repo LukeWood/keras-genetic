@@ -11,13 +11,28 @@ class MutationBreeder(Breeder):
 
     def __init__(
         self,
+        parents_per_generation,
         keep_probability=0.9,
+        keep_parents=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.keep_probability = keep_probability
+        self.parents_per_generation = parents_per_generation
+        self.keep_parents = keep_parents
+        self.parents = None
 
-    def offspring(self, parents):
+    def update_state(self, generation):
+        self._parents = generation[: self.parents_per_generation]
+
+    def offspring(self):
+        parents = self._parents
+        if not parents:
+            raise RuntimeError(
+                "`MutationBreeder.offspring()` called before "
+                "`update_state()`.  Please call `update_state()` at least once before "
+                "calling `offspring()`."
+            )
         mother = random.choice(parents)
         offspring_weights = []
 
@@ -37,3 +52,11 @@ class MutationBreeder(Breeder):
             offspring_weights.append(np.array(result).reshape(shape))
 
         return core.Individual(offspring_weights, model=mother.model)
+
+    def population(self, population_size):
+        result = []
+        for _ in range(population_size):
+            result.append(self.offspring())
+        if self.keep_parents:
+            result = result + self._parents
+        return result
