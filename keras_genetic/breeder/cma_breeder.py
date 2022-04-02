@@ -1,9 +1,9 @@
 import numpy as np
+import math
+from keras_genetic.breeder.breeder import Breeder
+from keras_genetic import core
 
-import keras_genetic
-
-
-class CMABreeder(keras_genetic.Breeder):
+class CMABreeder(Breeder):
     """CMABreeder produces offspring using the CMA-ES Algorithm.
 
     Covariance matrix adaptation evolution strategy (CMA-ES) is an evoluationary
@@ -14,17 +14,37 @@ class CMABreeder(keras_genetic.Breeder):
     - https://github.com/CMA-ES/pycma
     """
 
-    def __init__(self, n, initializer=None):
-        super().__init__(initializer=initializer)
+    def __init__(self, recombination_parents, population_size, n=None, model=None):
+        super().__init__()
 
-        self.mean = np.random_normal((n, 1))
+        if n is None and model is None:
+            raise ValueError(
+                "CMABreeder() received n=None, model=None.  Expected either n or model "
+                "to be provided.  Please pass n, for the number of weights, or a model "
+                "to dynmically compute the number of weights needed."
+            )
+
+        if n is None:
+            n = model.count_params()
+
+        self.mean = np.random.normal((n,))
         self.sigma = 0.3
-        self.p_sigma = None
-        self.p_c = None
-        self.covariance_matrix = np.identity(n, np.float32)
-        self.mu = 2
 
-        self.d = np.ones((n, 1), np.float32)
+        self.n = n
+        self.recombination_parents = recombination_parents # mu
+        self.population_size = population_size
+        # initalize weights
+        self.weights = np.log(self.recombination_parents + 1/2)-np.log(np.arange(1, self.recombination_parents))
+        self.recombination_effectiveness = (np.sum(self.weights)**2) / np.sum(np.square(self.weights))
+
+        self.path_c = np.zeros((n, 1))
+        self.path_sigma = np.zeros((n, 1))
+
+        self.scaling = np.ones((n, 1))
+        self.covariance_matrix = np.diag(np.square(self.scaling))
+        self.invsqrt_covariance = np.diag(1/self.covariance_matrix)
+        self.eigeneval = 0
+        self.chiN = np.power(n, 0.5) * (1 - (1/(4*n) + 1/(21*n**2)))
 
     def offspring(self):
         """offspring() samples from a multivariate normal.
@@ -40,14 +60,7 @@ class CMABreeder(keras_genetic.Breeder):
         In reality, we also need to reshape the weights matrix to also fit the spec of
         parents[0].
         """
-        del parents
-
-        # What the hell is the point of self.b?  Stolen from matlab code - isn't it just
-        # an identity matrix?
-        sample = np.matmul(
-            np.matmul(self.sigma, self.b)
-            * np.multiply(self.d, np.random.normal((self.n, 1)))
-        )
+        sample = self.sigma * np.multiply(self.scaling, np.random.normal((self.n,)))
         weights = self.mean + sample
 
         # Restructure weights to fit in the passed Keras model
@@ -73,7 +86,6 @@ class CMABreeder(keras_genetic.Breeder):
                     )
                 result.append(weights[idx])
                 idx += 1
-
             offspring_weights.append(np.array(result).reshape(shape))
 
         if idx != n_weights:
@@ -82,7 +94,7 @@ class CMABreeder(keras_genetic.Breeder):
                 "the correct value for `n`?  `n` must match "
                 "dim(model.get_weights().flatten())"
             )
-        return core.Individual(offspring_weights, model=template_model)
+        return core.Individual(weights=offspring_weights, model=mother.model)
 
     def update_state(self, generation):
         """`update_state(generation)` method updates the state of the breeder class.
@@ -90,8 +102,8 @@ class CMABreeder(keras_genetic.Breeder):
         In pseudocode:
 
         x1...xn = x_s1... x_sn -> individuals sorted based on fitness
-        mean_prime = mean // we later need mean - mean_prime and x_i - mean_prime
 
+        mean_prime = mean // we later need mean - mean_prime and x_i - mean_prime
         mean = update_mean(x1...xn) // move the mean to better solutions
 
         // update "isotropic evolution path"
@@ -105,6 +117,10 @@ class CMABreeder(keras_genetic.Breeder):
         // update step-size using isotropic path length
         sigma = update_sigma(sigma, norm(p_sigma))
         """
+        # template is used to pass the model down to the children
         self._template = generation[0]
+
+        mean_old = self.mean
+        #mean =
 
         pass

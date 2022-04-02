@@ -1,4 +1,4 @@
-function xmin=purecmaes   % (mu/mu_w, lambda)-CMA-ES
+function xmin=purecmaes   % (recombination_parents/mu_w, population_size)-CMA-ES
   % --------------------  Initialization --------------------------------
   % User defined input parameters (need to be edited)
   strfitnessfct = 'frosenbrock';  % name of objective/fitness function
@@ -9,73 +9,73 @@ function xmin=purecmaes   % (mu/mu_w, lambda)-CMA-ES
   stopeval = 1e3*N^2;   % stop after stopeval number of function evaluations
 
   % Strategy parameter setting: Selection
-  lambda = 4+floor(3*log(N));  % population size, offspring number
-  mu = lambda/2;               % number of parents/points for recombination
-  weights = log(mu+1/2)-log(1:mu)'; % muXone array for weighted recombination
-  mu = floor(mu);
+  population_size = 4+floor(3*log(N));  % population size, offspring number
+  recombination_parents = population_size/2;               % number of parents/points for recombination
+  weights = log(recombination_parents+1/2)-log(1:recombination_parents)'; % muXone array for weighted recombination
+  recombination_parents = floor(recombination_parents);
   weights = weights/sum(weights);     % normalize recombination weights array
   mueff=sum(weights)^2/sum(weights.^2); % variance-effectiveness of sum w_i x_i
 
   % Strategy parameter setting: Adaptation
-  cc = (4+mueff/N) / (N+4 + 2*mueff/N);  % time constant for cumulation for C
-  cs = (mueff+2) / (N+mueff+5);  % t-const for cumulation for sigma control
-  c1 = 2 / ((N+1.3)^2+mueff);    % learning rate for rank-one update of C
-  cmu = min(1-c1, 2 * (mueff-2+1/mueff) / ((N+2)^2+mueff));  % and for rank-mu update
-  damps = 1 + 2*max(0, sqrt((mueff-1)/(N+1))-1) + cs; % damping for sigma
+  time_cumulation_c = (4+mueff/N) / (N+4 + 2*mueff/N);  % time constant for cumulation for covariance
+  cumulation_for_sigma = (mueff+2) / (N+mueff+5);  % t-const for cumulation for sigma control
+  learning_rate_for_c_update = 2 / ((N+1.3)^2+mueff);    % learning rate for rank-one update of covariance
+  rank-recombination_parents_upgrade = min(1-learning_rate_for_c_update, 2 * (mueff-2+1/mueff) / ((N+2)^2+mueff));  % and for rank-recombination_parents update
+  damps = 1 + 2*max(0, sqrt((mueff-1)/(N+1))-1) + cumulation_for_sigma; % damping for sigma
                                                       % usually close to 1
   % Initialize dynamic (internal) strategy parameters and constants
-  pc = zeros(N,1); ps = zeros(N,1);   % evolution paths for C and sigma
-  B = eye(N,N);                       % B defines the coordinate system
-  D = ones(N,1);                      % diagonal D defines the scaling
-  C = B * diag(D.^2) * B';            % covariance matrix C
-  invsqrtC = B * diag(D.^-1) * B';    % C^-1/2
-  eigeneval = 0;                      % track update of B and D
+  path_c = zeros(N,1); path_sigma = zeros(N,1);   % evolution paths for covariance and sigma
+  coordinates = eye(N,N);                       % coordinates defines the coordinate system
+  scaling = ones(N,1);                      % diagonal scaling defines the scaling
+  covariance = coordinates * diag(scaling.^2) * coordinates';            % covariance matrix covariance
+  inverse_sqrt_covariance = coordinates * diag(scaling.^-1) * coordinates';    % covariance^-1/2
+  eigeneval = 0;                      % track update of coordinates and scaling
   chiN=N^0.5*(1-1/(4*N)+1/(21*N^2));  % expectation of
                                       %   ||N(0,I)|| == norm(randn(N,1))
   % -------------------- Generation Loop --------------------------------
   counteval = 0;  % the next 40 lines contain the 20 lines of interesting code
   while counteval < stopeval
 
-      % Generate and evaluate lambda offspring
-      for k=1:lambda
-          arx(:,k) = xmean + sigma * B * (D .* randn(N,1)); % m + sig * Normal(0,C)
+      % Generate and evaluate population_size offspring
+      for k=1:population_size
+          arx(:,k) = xmean + sigma * coordinates * (scaling .* randn(N,1)); % m + sig * Normal(0,covariance)
           arfitness(k) = feval(strfitnessfct, arx(:,k)); % objective function call
           counteval = counteval+1;
       end
 
       % Sort by fitness and compute weighted mean into xmean
       [arfitness, arindex] = sort(arfitness); % minimization
-      xold = xmean;
-      xmean = arx(:,arindex(1:mu))*weights;   % recombination, new mean value
+      mean_old = xmean;
+      xmean = arx(:,arindex(1:recombination_parents))*weights;   % recombination, new mean value
 
       % Cumulation: Update evolution paths
-      ps = (1-cs)*ps ...
-            + sqrt(cs*(2-cs)*mueff) * invsqrtC * (xmean-xold) / sigma;
-      hsig = norm(ps)/sqrt(1-(1-cs)^(2*counteval/lambda))/chiN < 1.4 + 2/(N+1);
-      pc = (1-cc)*pc ...
-            + hsig * sqrt(cc*(2-cc)*mueff) * (xmean-xold) / sigma;
+      path_sigma = (1-cumulation_for_sigma)*path_sigma ...
+            + sqrt(cumulation_for_sigma*(2-cumulation_for_sigma)*mueff) * inverse_sqrt_covariance * (xmean-mean_old) / sigma;
+      hsig = norm(path_sigma)/sqrt(1-(1-cumulation_for_sigma)^(2*counteval/population_size))/chiN < 1.4 + 2/(N+1);
+      path_c = (1-time_cumulation_c)*path_c ...
+            + hsig * sqrt(time_cumulation_c*(2-time_cumulation_c)*mueff) * (xmean-mean_old) / sigma;
 
-      % Adapt covariance matrix C
-      artmp = (1/sigma) * (arx(:,arindex(1:mu))-repmat(xold,1,mu));
-      C = (1-c1-cmu) * C ...                  % regard old matrix
-           + c1 * (pc*pc' ...                 % plus rank one update
-                   + (1-hsig) * cc*(2-cc) * C) ... % minor correction if hsig==0
-           + cmu * artmp * diag(weights) * artmp'; % plus rank mu update
+      % Adapt covariance matrix covariance
+      artmp = (1/sigma) * (arx(:,arindex(1:recombination_parents))-repmat(mean_old,1,recombination_parents));
+      covariance = (1-learning_rate_for_c_update-rank-recombination_parents_upgrade) * covariance ...                  % regard old matrix
+           + learning_rate_for_c_update * (path_c*path_c' ...                 % plus rank one update
+                   + (1-hsig) * time_cumulation_c*(2-time_cumulation_c) * covariance) ... % minor correction if hsig==0
+           + rank-recombination_parents_upgrade * artmp * diag(weights) * artmp'; % plus rank recombination_parents update
 
       % Adapt step size sigma
-      sigma = sigma * exp((cs/damps)*(norm(ps)/chiN - 1));
+      sigma = sigma * exp((cumulation_for_sigma/damps)*(norm(path_sigma)/chiN - 1));
 
-      % Decomposition of C into B*diag(D.^2)*B' (diagonalization)
-      if counteval - eigeneval > lambda/(c1+cmu)/N/10  % to achieve O(N^2)
+      % Decomposition of covariance into coordinates*diag(scaling.^2)*coordinates' (diagonalization)
+      if counteval - eigeneval > population_size/(learning_rate_for_c_update+rank-recombination_parents_upgrade)/N/10  % to achieve O(N^2)
           eigeneval = counteval;
-          C = triu(C) + triu(C,1)'; % enforce symmetry
-          [B,D] = eig(C);           % eigen decomposition, B==normalized eigenvectors
-          D = sqrt(diag(D));        % D is a vector of standard deviations now
-          invsqrtC = B * diag(D.^-1) * B';
+          covariance = triu(covariance) + triu(covariance,1)'; % enforce symmetry
+          [coordinates,scaling] = eig(covariance);           % eigen decomposition, coordinates==normalized eigenvectors
+          scaling = sqrt(diag(scaling));        % scaling is a vector of standard deviations now
+          inverse_sqrt_covariance = coordinates * diag(scaling.^-1) * coordinates';
       end
 
       % Break, if fitness is good enough or condition exceeds 1e14, better termination methods are advisable
-      if arfitness(1) <= stopfitness || max(D) > 1e7 * min(D)
+      if arfitness(1) <= stopfitness || max(scaling) > 1e7 * min(scaling)
           break;
       end
 

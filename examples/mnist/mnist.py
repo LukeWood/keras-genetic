@@ -45,6 +45,8 @@ def evaluate_accuracy(individual: keras_genetic.Individual):
     return result["accuracy"]
 
 
+n = model.get_weights().flatten().shape[0]
+
 results = keras_genetic.search(
     model=model,
     # computational cost is evaluate*generations*population_size
@@ -52,7 +54,7 @@ results = keras_genetic.search(
     generations=100,
     population_size=50,
     n_parents_from_population=5,
-    breeder=keras_genetic.breeder.MutationBreeder(),
+    breeder=keras_genetic.breeder.CMABreeder(n=n),
     return_best=1,
 )
 
