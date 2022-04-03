@@ -4,6 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 import keras_genetic
+from show_best_callback import ShowBest
 
 env = gym.make("CartPole-v1")
 
@@ -32,6 +33,7 @@ def evaluate_cartpole(individual: keras_genetic.Individual):
     return total_reward
 
 
+show_best = ShowBest(gym.make("CartPole-v1"))
 results = keras_genetic.search(
     # computational cost is evaluate*generations*population_size
     model=model,
@@ -40,17 +42,11 @@ results = keras_genetic.search(
     population_size=10,
     breeder=keras_genetic.breeder.RandomWeightBreeder(model, parents_per_generation=3),
     return_best=1,
-    callbacks=[keras_genetic.callbacks.EarlyStopping(goal=500.0)]
+    callbacks=[keras_genetic.callbacks.EarlyStopping(goal=500.0), show_best)]
     # note: the CartpoleGifCallback is super expensive because of the video
     # processing.  Only enable it if you really want to create the gifs.
     # callbacks=[CartpoleGifCallback(env)],
 )
-model = results.best.load_model()
 
-state = env.reset()
-for _ in range(1000):
-    env.render()
-    action_probs = model(np.expand_dims(state, axis=0))
-    action = np.argmax(np.squeeze(action_probs))
-    state, reward, done, _ = env.step(action)
-env.close()
+# show the best model one more time
+show_best.on_generation_end(-1, results)

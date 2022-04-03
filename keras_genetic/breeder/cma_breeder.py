@@ -2,8 +2,8 @@ import math
 
 import numpy as np
 
-import keras_genetic.utils
 from keras_genetic import core
+from keras_genetic import utils
 from keras_genetic.breeder.breeder import Breeder
 
 
@@ -21,7 +21,7 @@ class CMABreeder(Breeder):
     def __init__(self, model, recombination_parents, population_size, **kwargs):
         super().__init__(model, **kwargs)
 
-        self.mean = np.random.normal((n,))
+        self.mean = np.random.normal((self.num_params,))
         self.sigma = 0.3
 
         self.recombination_parents = recombination_parents  # mu
@@ -34,14 +34,16 @@ class CMABreeder(Breeder):
             np.square(self.weights)
         )
 
-        self.covariance_path = np.zeros((n, 1))
-        self.sigma_path = np.zeros((n, 1))
+        self.covariance_path = np.zeros((self.num_params, 1))
+        self.sigma_path = np.zeros((self.num_params, 1))
 
-        self.scaling = np.ones((n, 1))
+        self.scaling = np.ones((self.num_params, 1))
         self.covariance_matrix = np.diag(np.square(self.scaling))
         self.invsqrt_covariance = np.diag(1 / self.covariance_matrix)
         self.eigeneval = 0
-        self.chiN = np.power(n, 0.5) * (1 - (1 / (4 * n) + 1 / (21 * n**2)))
+        self.chiN = np.power(self.num_params, 0.5) * (
+            1 - (1 / (4 * self.num_params) + 1 / (21 * self.num_params**2))
+        )
 
     def offspring(self):
         """offspring() samples from a multivariate normal.
@@ -58,7 +60,10 @@ class CMABreeder(Breeder):
         parents[0].
         """
         weights = self._sample_weights()
-        return self._format_offspring(weights, self._template)
+        return keras_genetic.Inidivual(
+            weights=utils.conform_weights_to_shape(weights, self.model.get_weights()),
+            model=self.model,
+        )
 
     def update_state(self, generation):
         """`update_state(generation)` method updates the state of the breeder class.
@@ -107,6 +112,8 @@ class CMABreeder(Breeder):
         return self.sigma
 
     def _sample_weights(self):
-        sample = self.sigma * np.multiply(self.scaling, np.random.normal((self.n,)))
+        sample = self.sigma * np.multiply(
+            self.scaling, np.random.normal((self.self.num_params,))
+        )
         weights = self.mean + sample
         return weights.flatten()
