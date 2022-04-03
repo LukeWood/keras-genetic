@@ -74,6 +74,8 @@ class _SearchManager:
         return_best,
         callbacks,
     ):
+        self.best_individuals = []
+
         self.generations = generations
         self.initial_population = initial_population
         self.population_size = population_size
@@ -102,22 +104,32 @@ class _SearchManager:
         parents = []
 
         for g in range(self.generations):
+            # Call generation begin callbacks
+            temp_result = SearchResult(population)
             for callback in self.callbacks:
-                callback.on_generation_begin(g, SearchResult(population))
+                callback.on_generation_begin(g, temp_result)
 
+            # evaluate all individuals in the current population
             for individual in population:
                 if individual.fitness is None:
                     individual.fitness = self.evaluator(individual)
 
+            # rank individuals by score
             population = sorted(population, reverse=True)
+            # update breeder with results
             self.breeder.update_state(population)
+            # store the best individuals from all runs
+            # these are ultimately returned to users
+            # also they are used in on_generation_end callbacks
+            self.best_individuals = sorted(self.best_individuals + population, reverse=True)[:self.return_best]
 
+            temp_result = SearchResult(self.best_individuals)
             for callback in self.callbacks:
-                callback.on_generation_end(g, SearchResult(population))
+                callback.on_generation_end(g, temp_result)
 
             if self.should_stop or (g == self.generations - 1):
                 break
 
             population = self.breeder.population(self.population_size)
 
-        return SearchResult(population)
+        return SearchResult(self.best_individuals)

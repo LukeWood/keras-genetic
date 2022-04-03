@@ -18,10 +18,10 @@ function xmin=purecmaes   % (recombination_parents/mu_w, population_size)-CMA-ES
 
   % Strategy parameter setting: Adaptation
   time_cumulation_c = (4+mueff/N) / (N+4 + 2*mueff/N);  % time constant for cumulation for covariance
-  cumulation_for_sigma = (mueff+2) / (N+mueff+5);  % t-const for cumulation for sigma control
+  discount_factor = (mueff+2) / (N+mueff+5);  % t-const for cumulation for sigma control
   learning_rate_for_c_update = 2 / ((N+1.3)^2+mueff);    % learning rate for rank-one update of covariance
   rank-recombination_parents_upgrade = min(1-learning_rate_for_c_update, 2 * (mueff-2+1/mueff) / ((N+2)^2+mueff));  % and for rank-recombination_parents update
-  damps = 1 + 2*max(0, sqrt((mueff-1)/(N+1))-1) + cumulation_for_sigma; % damping for sigma
+  damps = 1 + 2*max(0, sqrt((mueff-1)/(N+1))-1) + discount_factor; % damping for sigma
                                                       % usually close to 1
   % Initialize dynamic (internal) strategy parameters and constants
   path_c = zeros(N,1); path_sigma = zeros(N,1);   % evolution paths for covariance and sigma
@@ -49,9 +49,9 @@ function xmin=purecmaes   % (recombination_parents/mu_w, population_size)-CMA-ES
       xmean = arx(:,arindex(1:recombination_parents))*weights;   % recombination, new mean value
 
       % Cumulation: Update evolution paths
-      path_sigma = (1-cumulation_for_sigma)*path_sigma ...
-            + sqrt(cumulation_for_sigma*(2-cumulation_for_sigma)*mueff) * inverse_sqrt_covariance * (xmean-mean_old) / sigma;
-      hsig = norm(path_sigma)/sqrt(1-(1-cumulation_for_sigma)^(2*counteval/population_size))/chiN < 1.4 + 2/(N+1);
+      path_sigma = (1-discount_factor)*path_sigma ...
+            + sqrt(discount_factor*(2-discount_factor)*mueff) * inverse_sqrt_covariance * (xmean-mean_old) / sigma;
+      hsig = norm(path_sigma)/sqrt(1-(1-discount_factor)^(2*counteval/population_size))/chiN < 1.4 + 2/(N+1);
       path_c = (1-time_cumulation_c)*path_c ...
             + hsig * sqrt(time_cumulation_c*(2-time_cumulation_c)*mueff) * (xmean-mean_old) / sigma;
 
@@ -63,7 +63,7 @@ function xmin=purecmaes   % (recombination_parents/mu_w, population_size)-CMA-ES
            + rank-recombination_parents_upgrade * artmp * diag(weights) * artmp'; % plus rank recombination_parents update
 
       % Adapt step size sigma
-      sigma = sigma * exp((cumulation_for_sigma/damps)*(norm(path_sigma)/chiN - 1));
+      sigma = sigma * exp((discount_factor/damps)*(norm(path_sigma)/chiN - 1));
 
       % Decomposition of covariance into coordinates*diag(scaling.^2)*coordinates' (diagonalization)
       if counteval - eigeneval > population_size/(learning_rate_for_c_update+rank-recombination_parents_upgrade)/N/10  % to achieve O(N^2)
