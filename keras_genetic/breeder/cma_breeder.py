@@ -18,7 +18,14 @@ class CMABreeder(Breeder):
     - https://github.com/CMA-ES/pycma
     """
 
-    def __init__(self, model, recombination_parents, population_size, discount_factor=0.01, **kwargs):
+    def __init__(
+        self,
+        model,
+        recombination_parents,
+        population_size,
+        discount_factor=0.01,
+        **kwargs
+    ):
         super().__init__(model, **kwargs)
 
         self.mean = np.random.normal((self.num_params,))
@@ -39,6 +46,11 @@ class CMABreeder(Breeder):
         self.covariance_path = np.zeros((self.num_params, 1))
         self.sigma_path = np.zeros((self.num_params, 1))
         self.covariance_matrix = np.identity(self.num_params)
+        (
+            self.scaling,
+            self.covariance_eigenvectors,
+            self.inverse_covariance_sqrt,
+        ) = self._compute_cached_covariance_by_products(self.covariance_matrix)
 
     def offspring(self):
         """offspring() samples from a multivariate normal.
@@ -86,10 +98,13 @@ class CMABreeder(Breeder):
         parents = generation[: self.recombination_parents]
         population_size = len(generation)
 
-        self.mean = self._update_mean(
-            old_mean, parents
+        self.mean = self._update_mean(old_mean, parents)
+
+        print("self.sigma_path.shape", self.sigma_path.shape)
+        self.sigma_path = self._update_sigma_path(
+            self.mean, old_mean, self.discount_factor, population_size
         )
-        self.sigma_path = self._update_sigma_path(old_mean, parents, self.discount_factor, population_size)
+        print("self.sigma_path.shape", self.sigma_path.shape)
         self.covariance_path = self._update_covariance_path()
         self.covariance_matrix = self._update_covariance_matrix()
         self.sigma = self._update_sigma()
@@ -98,60 +113,66 @@ class CMABreeder(Breeder):
         parents_concat = np.array(
             [utils.flatten(candidate.weights) for candidate in parents]
         )
-        print("parents_concat.shape", parents_concat.shape)
         # broadcast mean over the batch dimension, which is the number of parents
         delta = parents_concat - self.mean[None, ...]
-        print("delta.shape", delta.shape)
         # broadcast the weights across the num_params dimension
         updates = delta * self.recombination_weights[..., None]
-        print("updates.shape", updates.shape)
         # sum over the individual num_parents axis
         update = updates.sum(axis=0)
-        print("update.shape", update.shape)
         return old_mean + update
 
-    def _update_sigma_path(self, old_mean, parents, discount_factor, population_size):
+    def _update_sigma_path(self, new_mean, old_mean, discount_factor, population_size):
+        # SIGMA PATH IS WRONG SHAPE!!!
         sigma_path = self.sigma_path
 
         # can be thought of as a slow degeneration
         discount = (1 - discount_factor) * sigma_path
+        print('discount', discount.shape)
 
         displacement_discount = math.sqrt(1 - (1 - discount_factor) ** 2)
         # we can probably just cache this, but localizing it makes the code more readable
-        inverse_weight_effectiveness = math.sqrt(1 / (np.power(self.recombination_weights, 2)).sum())
-        inverse_covariance_sqrt = self._inverse_covariance_sqrt()
-        print('self.covariance_matrix.shape', self.covariance_matrix.shape)
-        print('inverse_covariance_sqrt.shape', inverse_covariance_sqrt.shape)
-        # should precompute and cache
-        parents_concat = np.array(
-            [utils.flatten(candidate.weights) for candidate in parents]
+        inverse_weight_effectiveness = math.sqrt(
+            1 / (np.power(self.recombination_weights, 2)).sum()
         )
-        mean_displacement = parents_concat - self.mean[None, ...]
-        mean_displacement = mean_displacement.sum(axis=0)
-        print('mean_displacement.shape', mean_displacement.shape)
+        inverse_covariance_sqrt = self.inverse_covariance_sqrt
+        print('inverse_covariance_sqrt', inverse_covariance_sqrt.shape)
+        # should precompute and cache
+        displacement = (new_mean - old_mean) / self.sigma
+        print('displacement', displacement.shape)
 
         displacement_factor = inverse_weight_effectiveness * np.matmul(
-            inverse_covariance_sqrt, mean_displacement / self.sigma
+            inverse_covariance_sqrt, displacement_factor / self.sigma
         )
-
         return discount + (displacement_discount * displacement_factor)
-
-    def _inverse_covariance_sqrt(self):
-        w, v = np.linalg.eig(self.covariance_matrix)
-        scaling = np.sqrt(np.diag(v))
-        print('scaling.shape', scaling.shape)
-        print('np.diag(scaling).shape', np.diag(scaling).shape)
-        print('w.shape', w.shape)
-
-        scaling = np.diag(scaling)
-        scaling = np.divide(1, scaling, out=np.zeros_like(scaling), where=scaling !=0)
-        return w * scaling * np.transpose(w)
 
     def _update_covariance_path(self):
         return self.covariance_path
 
     def _update_covariance_matrix(self):
-        return self.covariance_matrix
+        # update covariance_matrix
+        updated_covariance_matrix = self.covariance_matrix
+        # update scaling and eigenvectors
+        (
+            self.scaling,
+            self.covariance_eigenvectors,
+            self.inverse_covariance_sqrt,
+        ) = self._compute_cached_covariance_by_products(updated_covariance_matrix)
+        return updated_covariance_matrix
+
+    def _compute_cached_covariance_by_products(self, covariance_matrix):
+        w, v = np.linalg.eig(covariance_matrix)
+        scaling = np.sqrt(np.diag(v))
+        covariance_eigenvectors = w
+
+        # update inverse_covariance_sqrt
+        intermediary_scaling = np.divide(
+            1,
+            scaling,
+            out=np.zeros_like(scaling),
+            where=scaling != 0,
+        )
+        inverse_covariance_sqrt = w * np.diag(intermediary_scaling) * np.transpose(w)
+        return scaling, covariance_eigenvectors, inverse_covariance_sqrt
 
     def _update_sigma(self):
         return self.sigma
