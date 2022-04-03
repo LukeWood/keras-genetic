@@ -1,7 +1,11 @@
-import numpy as np
 import math
-from keras_genetic.breeder.breeder import Breeder
+
+import numpy as np
+
+import keras_genetic.utils
 from keras_genetic import core
+from keras_genetic.breeder.breeder import Breeder
+
 
 class CMABreeder(Breeder):
     """CMABreeder produces offspring using the CMA-ES Algorithm.
@@ -14,37 +18,30 @@ class CMABreeder(Breeder):
     - https://github.com/CMA-ES/pycma
     """
 
-    def __init__(self, recombination_parents, population_size, n=None, model=None):
-        super().__init__()
-
-        if n is None and model is None:
-            raise ValueError(
-                "CMABreeder() received n=None, model=None.  Expected either n or model "
-                "to be provided.  Please pass n, for the number of weights, or a model "
-                "to dynmically compute the number of weights needed."
-            )
-
-        if n is None:
-            n = model.count_params()
+    def __init__(self, model, recombination_parents, population_size, **kwargs):
+        super().__init__(model, **kwargs)
 
         self.mean = np.random.normal((n,))
         self.sigma = 0.3
 
-        self.n = n
-        self.recombination_parents = recombination_parents # mu
+        self.recombination_parents = recombination_parents  # mu
         self.population_size = population_size
         # initalize weights
-        self.weights = np.log(self.recombination_parents + 1/2)-np.log(np.arange(1, self.recombination_parents))
-        self.recombination_effectiveness = (np.sum(self.weights)**2) / np.sum(np.square(self.weights))
+        self.weights = np.log(self.recombination_parents + 1 / 2) - np.log(
+            np.arange(1, self.recombination_parents)
+        )
+        self.recombination_effectiveness = (np.sum(self.weights) ** 2) / np.sum(
+            np.square(self.weights)
+        )
 
         self.covariance_path = np.zeros((n, 1))
         self.sigma_path = np.zeros((n, 1))
 
         self.scaling = np.ones((n, 1))
         self.covariance_matrix = np.diag(np.square(self.scaling))
-        self.invsqrt_covariance = np.diag(1/self.covariance_matrix)
+        self.invsqrt_covariance = np.diag(1 / self.covariance_matrix)
         self.eigeneval = 0
-        self.chiN = np.power(n, 0.5) * (1 - (1/(4*n) + 1/(21*n**2)))
+        self.chiN = np.power(n, 0.5) * (1 - (1 / (4 * n) + 1 / (21 * n**2)))
 
     def offspring(self):
         """offspring() samples from a multivariate normal.
@@ -96,12 +93,16 @@ class CMABreeder(Breeder):
 
     def _update_mean(self):
         return self.mean
+
     def _update_sigma_path(self):
         return self.sigma_path
+
     def _update_covariance_path(self):
         return self.covariance_path
+
     def _update_covariance_matrix(self):
         return self.covariance_matrix
+
     def _update_sigma(self):
         return self.sigma
 
@@ -109,32 +110,3 @@ class CMABreeder(Breeder):
         sample = self.sigma * np.multiply(self.scaling, np.random.normal((self.n,)))
         weights = self.mean + sample
         return weights.flatten()
-
-    def _format_offspring(self, weights, mother):
-        n_weights = weights.shape[0]
-
-        idx = 0
-        offspring_weights = []
-        for template_weight in mother.weights:
-            shape = template_weight.shape
-            template_weight = template_weight.flatten()
-
-            result = []
-            for i in range(template_weight.shape[0]):
-                if idx > n_weights:
-                    raise ValueError(
-                        "Weights exhausted during model population.  Did you pass "
-                        "the correct value for `n`?  `n` must match "
-                        f"dim(model.get_weights().flatten())."
-                    )
-                result.append(weights[idx])
-                idx += 1
-            offspring_weights.append(np.array(result).reshape(shape))
-
-        if idx != n_weights:
-            raise ValueError(
-                "Not all weights were used when producing an offspring.  Did you pass "
-                "the correct value for `n`?  `n` must match "
-                "dim(model.get_weights().flatten())"
-            )
-        return core.Individual(weights=offspring_weights, model=mother.model)

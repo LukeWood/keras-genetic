@@ -6,12 +6,13 @@ import keras_genetic
 class Breeder:
     """Breeder is responsible for creating offspring."""
 
-    def __init__(self, initializer=None):
+    def __init__(self, model, initializer=None):
+        self.model = model
+        self.num_params = model.count_params()
+
         if initializer is None:
             initializer = keras_genetic.initializers.random_normal.RandomNormal()
         self.initializer = initializer
-        self._parents = None
-        self._template_model = None
 
     def offspring(self):
         """`offspring()` creates a new offspring from a mother and father model.
@@ -27,7 +28,7 @@ class Breeder:
 
     def update_state(self, generation):
         raise NotImplementedError(
-            "`update_state()` must be implemented on the breeder class."
+            "`update_state(generation)` must be implemented on the breeder class."
         )
 
     def population(self, population_size):
@@ -35,10 +36,10 @@ class Breeder:
             "`population()` must be implemented on the breeder class."
         )
 
-    def fully_random_weight_set(self, mother):
+    def fully_random_weight_set(self):
         offspring_weights = []
 
-        for m in mother.weights:
+        for m in self.model.get_weights():
             shape = m.shape
 
             # easier to traverse them as flattened arrays
@@ -49,4 +50,4 @@ class Breeder:
 
             offspring_weights.append(np.array(result).reshape(shape))
 
-        return keras_genetic.Individual(offspring_weights, model=mother.model)
+        return keras_genetic.Individual(offspring_weights, model=self.model)

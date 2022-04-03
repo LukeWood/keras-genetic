@@ -38,7 +38,7 @@ results = keras_genetic.search(
     evaluator=evaluate_cartpole,
     generations=20,
     population_size=10,
-    breeder=keras_genetic.breeder.MutationBreeder(parents_per_generation=3),
+    breeder=keras_genetic.breeder.RandomWeightBreeder(model, parents_per_generation=3),
     return_best=1,
     callbacks=[keras_genetic.callbacks.EarlyStopping(goal=500.0)]
     # note: the CartpoleGifCallback is super expensive because of the video

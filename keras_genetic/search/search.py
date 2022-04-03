@@ -88,8 +88,7 @@ class _SearchManager:
 
     def initial_generation(self, model, dummy_individual):
         return [
-            self.breeder.fully_random_weight_set(dummy_individual)
-            for _ in range(self.population_size)
+            self.breeder.fully_random_weight_set() for _ in range(self.population_size)
         ]
 
     def stop(self):
