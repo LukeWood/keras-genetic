@@ -11,7 +11,8 @@ class CMABreeder(Breeder):
     """CMABreeder produces offspring using the CMA-ES Algorithm.
 
     Covariance matrix adaptation evolution strategy (CMA-ES) is an evoluationary
-    algoirthm for use in optimization problems.
+    algoirthm for use in optimization problems.  Implementation is based on the
+    mathematical overview provided in the wikipedia article.
 
     References:
     - https://en.wikipedia.org/wiki/CMA-ES
@@ -72,6 +73,8 @@ class CMABreeder(Breeder):
             1 / (np.power(self.recombination_weights, 2)).sum()
         )
 
+        self.counteval = 0
+
     def offspring(self):
         """offspring() samples from a multivariate normal.
 
@@ -93,9 +96,9 @@ class CMABreeder(Breeder):
         )
 
     def update_state(self, generation):
+        self.counteval += 1
         # template is used to pass the model down to the children
         old_mean = self.mean
-        print(old_mean.shape)
         # parents are the individuals picked for use in the mean
         parents = generation[: self.recombination_parents]
         population_size = len(generation)
@@ -104,8 +107,10 @@ class CMABreeder(Breeder):
         self.mean = self._update_mean(old_mean, parents, self.recombination_weights)
 
         self.sigma_path = self._update_sigma_path(
-            self.sigma_path, self.mean, old_mean, self.discount_factor_sigma, population_size
+            self.sigma_path, self.mean, old_mean, self.discount_factor_sigma, self.sigma
         )
+        hsig = self._compute_hsig(self.sigma_path, population_size)
+
         self.covariance_path = self._update_covariance_path(
             self.covariance_path,
             self.mean,
@@ -134,6 +139,16 @@ class CMABreeder(Breeder):
             self.expected_norm_of_random,
         )
 
+    def _compute_hsig(
+        self,
+        sigma_path,
+        discount_factor,
+        population_size,
+    ):
+        intermediary = np.linalg.norm(path_sigma) / math.sqrt(
+            1 - (1 - discount_factor) ^ (2 * self.counteval / population_size)
+        ) / expected_norm_of_random < 1.4 + 2 / (self.num_params + 1)
+
     def _update_mean(self, old_mean, parents, recombination_weights):
         parents_concat = np.array(
             [utils.flatten(candidate.weights) for candidate in parents]
@@ -146,29 +161,19 @@ class CMABreeder(Breeder):
         update = updates.sum(axis=0)
         return old_mean + update
 
-    def _update_sigma_path(self, sigma_path, new_mean, old_mean, discount_factor, population_size):
+    def _update_sigma_path(
+        self, sigma_path, new_mean, old_mean, discount_factor, sigma
+    ):
         # can be thought of as a slow degeneration
-        discount = (1 - discount_factor) * sigma_path
+        left_term = (1 - discount_factor) * sigma_path
 
-        displacement_discount = self._complement_discount_factor(discount_factor)
-        # we can probably just cache this, but localizing it makes the code more readable
-        inverse_weight_effectiveness = math.sqrt(
-            1 / (np.power(self.recombination_weights, 2)).sum()
+        right_term = self._complement_discount_factor(discount_factor)
+        right_term = (
+            right_term
+            * np.matmul(self.inverse_sqrt_covariance, (new_mean - old_mean))
+            / sigma
         )
-
-        assert 1 < inverse_weight_effectiveness < self.recombination_parents, (
-            "For "
-            "some reason 1 < inverse_weight_effectiveness < self.recombination_parents "
-            "was false.  This is an invalid state"
-        )
-
-        inverse_covariance_sqrt = self.inverse_covariance_sqrt
-        # should precompute and cache
-        displacement = (new_mean - old_mean) / self.sigma
-        displacement_factor = inverse_weight_effectiveness * np.matmul(
-            inverse_covariance_sqrt, displacement / self.sigma
-        )
-        return discount + (displacement_discount * displacement_factor)
+        return left_term + right_term
 
     def _update_covariance_path(
         self,
@@ -187,11 +192,10 @@ class CMABreeder(Breeder):
 
         complement_discount_factor = self._complement_discount_factor(discount_factor)
         right_term = inverse_weight_effectiveness * (old_mean - new_mean) / sigma
-
-        return left_term + right_term*indicator_function
+        return left_term + right_term * indicator_function
 
     def _complement_discount_factor(self, discount_factor):
-        return math.sqrt(1 - ((1 - discount_factor) ** 2))
+        return math.sqrt(discount_factor * (2 - discount_factor) * self.mu_efficient)
 
     def _indicator_function(self, x):
         # alpha hard coded to 1.5
@@ -226,20 +230,26 @@ class CMABreeder(Breeder):
             1 - (base_learning_rate) - mu_learning_rate + cs
         ) * covariance_matrix
 
+        print("left_term", left_term)
+
+        print("matmul", np.matmul(path_covariance, np.transpose(path_covariance)))
         middle_term = base_learning_rate * np.matmul(
             path_covariance, np.transpose(path_covariance)
         )
-
+        print("middle_term", middle_term)
         # mu = self.recombination_parents
         # lambda = population_size
 
         parents_concat = np.array(
-            [utils.flatten(candidate.weights) for candidate in population[:self.recombination_parents]]
+            [
+                utils.flatten(candidate.weights)
+                for candidate in population[: self.recombination_parents]
+            ]
         )
         # array call stacks to first axis, we want this on the last axis
         parents_concat = np.transpose(parents_concat)
-        artmp = 1/sigma * (parents_concat - old_mean[..., None])
-        right_hand_term =np.matmul(artmp, np.diag(self.recombination_weights))
+        artmp = 1 / sigma * (parents_concat - old_mean[..., None])
+        right_hand_term = np.matmul(artmp, np.diag(self.recombination_weights))
         right_hand_term = np.matmul(right_hand_term, np.transpose(artmp))
         # broadcast mean over the batch dimension, which is the number of parents
 
@@ -247,7 +257,8 @@ class CMABreeder(Breeder):
         # Should right term actually consist of a slice for delta - from 0:mu for each
         # mu in range 0, mu?
         right_term = mu_learning_rate * right_hand_term
-
+        print("right_term", right_term)
+        input()
         updated_covariance_matrix = left_term + middle_term + right_term
         # update scaling and eigenvectors
         (
@@ -255,22 +266,8 @@ class CMABreeder(Breeder):
             self.covariance_eigenvectors,
             self.inverse_covariance_sqrt,
         ) = self._compute_cached_covariance_by_products(updated_covariance_matrix)
+        input()
         return updated_covariance_matrix
-
-    def _compute_cached_covariance_by_products(self, covariance_matrix):
-        w, v = np.linalg.eig(covariance_matrix)
-        scaling = np.sqrt(np.diag(v))
-        covariance_eigenvectors = w
-
-        # update inverse_covariance_sqrt
-        intermediary_scaling = np.divide(
-            1,
-            scaling,
-            out=np.zeros_like(scaling),
-            where=scaling != 0,
-        )
-        inverse_covariance_sqrt = w * np.diag(intermediary_scaling) * np.transpose(w)
-        return scaling, covariance_eigenvectors, inverse_covariance_sqrt
 
     def _update_sigma(
         self, discount_factor, dampen_sigma, sigma_path, expected_norm_of_random
