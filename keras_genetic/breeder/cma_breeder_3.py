@@ -7,6 +7,12 @@ from keras_genetic import utils
 from keras_genetic.breeder.breeder import Breeder
 import scipy
 
+"""
+
+Implementation based on youtube video:
+https://www.youtube.com/watch?v=Hk9rG1_CMKA
+"""
+
 class CMABreeder(Breeder):
     """CMABreeder produces offspring using the CMA-ES Algorithm.
 
@@ -39,7 +45,7 @@ class CMABreeder(Breeder):
 
         self.weights = np.log(self.mu + 1 / 2) - np.log(np.arange(0, self.mu) + 1)
         self.weights = self.weights / self.weights.sum()
-        self.mueff = self.weights.sum() ** 2 / (self.weights * self.weights).sum()
+        self.mueff = (self.weights.sum() ** 2) / (self.weights * self.weights).sum()
 
         # adaptation settings
         self.cc = (4 + self.mueff / self.N) + (self.N + 4 + 2 * self.mueff / self.N)

@@ -69,11 +69,27 @@ class CMABreeder(Breeder):
             - (1 / 4 * self.num_params)
             + 1 / (21 * (self.num_params**2))
         )
+
         self.inverse_weight_effectiveness = (
             1 / (np.power(self.recombination_weights, 2)).sum()
         )
 
         self.counteval = 0
+
+    def _compute_cached_covariance_by_products(self, covariance_matrix):
+        w, v = np.linalg.eig(covariance_matrix)
+        scaling = np.sqrt(np.diag(v))
+        covariance_eigenvectors = w
+
+        # update inverse_covariance_sqrt
+        intermediary_scaling = np.divide(
+            1,
+            scaling,
+            out=np.zeros_like(scaling),
+            where=scaling != 0,
+        )
+        inverse_covariance_sqrt = w * np.diag(intermediary_scaling) * np.transpose(w)
+        return scaling, covariance_eigenvectors, inverse_covariance_sqrt
 
     def offspring(self):
         """offspring() samples from a multivariate normal.
@@ -109,7 +125,6 @@ class CMABreeder(Breeder):
         self.sigma_path = self._update_sigma_path(
             self.sigma_path, self.mean, old_mean, self.discount_factor_sigma, self.sigma
         )
-        hsig = self._compute_hsig(self.sigma_path, population_size)
 
         self.covariance_path = self._update_covariance_path(
             self.covariance_path,
@@ -170,7 +185,7 @@ class CMABreeder(Breeder):
         right_term = self._complement_discount_factor(discount_factor)
         right_term = (
             right_term
-            * np.matmul(self.inverse_sqrt_covariance, (new_mean - old_mean))
+            * np.matmul(self.inverse_covariance_sqrt, (new_mean - old_mean))
             / sigma
         )
         return left_term + right_term
@@ -248,7 +263,7 @@ class CMABreeder(Breeder):
         )
         # array call stacks to first axis, we want this on the last axis
         parents_concat = np.transpose(parents_concat)
-        artmp = 1 / sigma * (parents_concat - old_mean[..., None])
+        artmp = (1 / sigma) * (parents_concat - old_mean[..., None])
         right_hand_term = np.matmul(artmp, np.diag(self.recombination_weights))
         right_hand_term = np.matmul(right_hand_term, np.transpose(artmp))
         # broadcast mean over the batch dimension, which is the number of parents
@@ -260,6 +275,10 @@ class CMABreeder(Breeder):
         print("right_term", right_term)
         input()
         updated_covariance_matrix = left_term + middle_term + right_term
+        updated_covariance_matrix = np.triu(updated_covariance_matrix) + np.transpose(
+            np.triu(updated_covariance_matrix, k=1)
+        )
+
         # update scaling and eigenvectors
         (
             self.scaling,
