@@ -22,21 +22,19 @@ class CMABreeder(Breeder):
         self,
         model,
         recombination_parents,
-        population_size,
         discount_factor_sigma=0.01,
         discount_factor_covariance=0.01,
         **kwargs
     ):
         super().__init__(model, **kwargs)
 
-        self.mean = np.random.normal((self.num_params,))
+        self.mean = np.random.normal(size=(self.num_params,))
         self.sigma = 0.3
 
         self.discount_factor_sigma = discount_factor_sigma
         self.discount_factor_covariance = discount_factor_covariance
 
         self.recombination_parents = recombination_parents  # mu
-        self.population_size = population_size
 
         # initalize weights
         self.recombination_weights = np.log(recombination_parents + 1 / 2) - np.log(
@@ -97,12 +95,11 @@ class CMABreeder(Breeder):
     def update_state(self, generation):
         # template is used to pass the model down to the children
         old_mean = self.mean
+        print(old_mean.shape)
         # parents are the individuals picked for use in the mean
         parents = generation[: self.recombination_parents]
+        population_size = len(generation)
         inverse_weight_effectiveness = self.inverse_weight_effectiveness
-
-        new_mean = self.update_mean(old_mean, parents)
-        # lambda = population_size
 
         self.mean = self._update_mean(old_mean, parents, self.recombination_weights)
 
@@ -123,7 +120,7 @@ class CMABreeder(Breeder):
             self.covariance_path,
             generation,
             population_size,
-            self.mean,
+            old_mean,
             self.sigma,
             self.sigma_path,
             2 / (self.num_params**2),  # c1
@@ -184,19 +181,24 @@ class CMABreeder(Breeder):
         inverse_weight_effectiveness,
     ):
         left_term = (1 - discount_factor) * covariance_path
-        path_sigma_norm = np.linalg.norm(sigma)
+        path_sigma_norm = np.linalg.norm(path_sigma)
 
-        alpha = 1.5  # just an approximated constant for now
-        if path_sigma_norm > (alpha * math.sqrt(self.num_params)):
-            return left_term
+        indicator_function = self._indicator_function(path_sigma_norm)
 
         complement_discount_factor = self._complement_discount_factor(discount_factor)
         right_term = inverse_weight_effectiveness * (old_mean - new_mean) / sigma
 
-        return covariance_path + right_term
+        return left_term + right_term*indicator_function
 
     def _complement_discount_factor(self, discount_factor):
         return math.sqrt(1 - ((1 - discount_factor) ** 2))
+
+    def _indicator_function(self, x):
+        # alpha hard coded to 1.5
+        if x >= 0 and x <= (1.5 * math.sqrt(self.num_params)):
+            return 1
+        else:
+            return 0
 
     def _update_covariance_matrix(
         self,
@@ -204,20 +206,19 @@ class CMABreeder(Breeder):
         path_covariance,
         population,
         population_size,
-        mean,
+        old_mean,
         sigma,
         path_sigma,
         base_learning_rate,  # c1
         mu_learning_rate,  # cs
-        c_c,  # C_c^-1 should be n/4, so whatever this value is is computed based on n
+        c_c,  # C_c^-1 should be n/4, so this value is computed based on n
     ):
         # update covariance_matrix
         covariance_matrix = self.covariance_matrix
 
         path_sigma_norm = np.linalg.norm(path_sigma)
-        indicator_function = (
-            1 if path_sigma_norm**2 < (1.5 * math.sqrt(self.num_params)) else 0
-        )
+        indicator_function = self._indicator_function(path_sigma_norm**2)
+
         cs = 1 - indicator_function
         cs = cs * base_learning_rate * mu_learning_rate * (2 - c_c)
 
@@ -235,16 +236,17 @@ class CMABreeder(Breeder):
         parents_concat = np.array(
             [utils.flatten(candidate.weights) for candidate in population[:self.recombination_parents]]
         )
+        # array call stacks to first axis, we want this on the last axis
+        parents_concat = np.transpose(parents_concat)
+        artmp = 1/sigma * (parents_concat - old_mean[..., None])
+        right_hand_term =np.matmul(artmp, np.diag(self.recombination_weights))
+        right_hand_term = np.matmul(right_hand_term, np.transpose(artmp))
         # broadcast mean over the batch dimension, which is the number of parents
-        delta = parents_concat - self.mean[None, ...]
-        delta_one = delta / sigma
-        delta_two = delta_one * self.recombination_weights[..., None]
-        delta = np.matmul(np.transpose(delta_one), delta_two)
 
         # TODO - correctness check right term
         # Should right term actually consist of a slice for delta - from 0:mu for each
         # mu in range 0, mu?
-        right_term = mu_learning_rate * delta.sum(axis=0)
+        right_term = mu_learning_rate * right_hand_term
 
         updated_covariance_matrix = left_term + middle_term + right_term
         # update scaling and eigenvectors
