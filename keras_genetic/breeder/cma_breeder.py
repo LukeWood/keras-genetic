@@ -44,15 +44,17 @@ class CMABreeder(Breeder):
         self.recombination_weights = (
             self.recombination_weights / self.recombination_weights.sum()
         )
-        self.mu_efficient = (
+        self.mu_effictive = (
             np.matmul(self.recombination_weights, self.recombination_weights)
             / np.multiply(self.recombination_weights, self.recombination_weights)
         ).sum()
 
+        self.cs = (self.mu_effictive+2) / (self.num_params+self.mu_effictive+5);
+
         self.dampen_sigma = (
             1
-            + 2 * max(0, math.sqrt((self.mu_efficient - 1) / (self.num_params + 1)) - 1)
-            + self.discount_factor_sigma
+            + 2 * max(0, math.sqrt((self.mu_effictive - 1) / (self.num_params + 1)) - 1)
+            + self.cs
         )
 
         self.covariance_path = np.zeros((self.num_params,))
@@ -70,25 +72,39 @@ class CMABreeder(Breeder):
             + 1 / (21 * (self.num_params**2))
         )
 
-        self.inverse_weight_effectiveness = (
-            1 / (np.power(self.recombination_weights, 2)).sum()
+        self.inverse_weight_effectiveness = 1 / (
+            (self.recombination_weights * self.recombination_weights).sum()
         )
 
         self.counteval = 0
 
     def _compute_cached_covariance_by_products(self, covariance_matrix):
-        w, v = np.linalg.eig(covariance_matrix)
-        scaling = np.sqrt(np.diag(v))
+        self.covariance_matrix = np.triu(self.covariance_matrix) + np.transpose(
+            np.triu(self.covariance_matrix, k=1)
+        )
+        v, w = np.linalg.eigh(covariance_matrix)
+        # values in w
+        # vectors in v
+        print('w', w)
+        print('v', v)
+        scaling = np.sqrt(np.abs(v))
+        print('scaling', scaling)
         covariance_eigenvectors = w
+        print('covariance_eigenvectors', covariance_eigenvectors)
 
         # update inverse_covariance_sqrt
         intermediary_scaling = np.divide(
             1,
-            scaling,
-            out=np.zeros_like(scaling),
+            np.diag(scaling),
+            out=np.zeros_like(np.diag(scaling)),
             where=scaling != 0,
         )
+        print('intermediary_scaling', intermediary_scaling)
         inverse_covariance_sqrt = w * np.diag(intermediary_scaling) * np.transpose(w)
+        print('scaling', scaling)
+        print('inverse_covariance_sqrt', inverse_covariance_sqrt)
+        print('covariance_eigenvectors', covariance_eigenvectors)
+        # input('cached covariance products')
         return scaling, covariance_eigenvectors, inverse_covariance_sqrt
 
     def offspring(self):
@@ -123,9 +139,13 @@ class CMABreeder(Breeder):
         self.mean = self._update_mean(old_mean, parents, self.recombination_weights)
 
         self.sigma_path = self._update_sigma_path(
-            self.sigma_path, self.mean, old_mean, self.discount_factor_sigma, self.sigma
+            self.sigma_path,
+            self.mean,
+            old_mean,
+            self.discount_factor_sigma,
+            np.sqrt(inverse_weight_effectiveness),
+            self.sigma,
         )
-
         self.covariance_path = self._update_covariance_path(
             self.covariance_path,
             self.mean,
@@ -148,11 +168,14 @@ class CMABreeder(Breeder):
             1 / (self.num_params / 4),
         )
         self.sigma = self._update_sigma(
+            self.sigma,
             self.discount_factor_sigma,
             self.dampen_sigma,
             self.sigma_path,
             self.expected_norm_of_random,
         )
+        print('dampen_sigma', self.dampen_sigma)
+        input()
 
     def _compute_hsig(
         self,
@@ -177,17 +200,31 @@ class CMABreeder(Breeder):
         return old_mean + update
 
     def _update_sigma_path(
-        self, sigma_path, new_mean, old_mean, discount_factor, sigma
+        self,
+        sigma_path,
+        new_mean,
+        old_mean,
+        discount_factor,
+        weight_effectiveness,
+        sigma,
     ):
         # can be thought of as a slow degeneration
         left_term = (1 - discount_factor) * sigma_path
-
+        print("weight_effectiveness", weight_effectiveness)
         right_term = self._complement_discount_factor(discount_factor)
+        print("complement_discount", right_term)
+
+        print('inverse_covariance_sqrt', self.inverse_covariance_sqrt)
+        print()
         right_term = (
-            right_term
-            * np.matmul(self.inverse_covariance_sqrt, (new_mean - old_mean))
-            / sigma
+            weight_effectiveness
+            * right_term
+            * self.inverse_covariance_sqrt
+            @ ((new_mean - old_mean) / sigma)
         )
+        print("left_term", left_term)
+        print("right_term", right_term)
+        print('sigma_path_result', left_term + right_term)
         return left_term + right_term
 
     def _update_covariance_path(
@@ -201,20 +238,21 @@ class CMABreeder(Breeder):
         inverse_weight_effectiveness,
     ):
         left_term = (1 - discount_factor) * covariance_path
-        path_sigma_norm = np.linalg.norm(path_sigma)
 
+        path_sigma_norm = np.linalg.norm(path_sigma)
         indicator_function = self._indicator_function(path_sigma_norm)
 
         complement_discount_factor = self._complement_discount_factor(discount_factor)
         right_term = inverse_weight_effectiveness * (old_mean - new_mean) / sigma
+
         return left_term + right_term * indicator_function
 
     def _complement_discount_factor(self, discount_factor):
-        return math.sqrt(discount_factor * (2 - discount_factor) * self.mu_efficient)
+        return math.sqrt(1 - (1 - discount_factor) ** 2)
 
     def _indicator_function(self, x):
         # alpha hard coded to 1.5
-        if x >= 0 and x <= (1.5 * math.sqrt(self.num_params)):
+        if x >= 0 and x <= 1.5 * np.sqrt(self.num_params):
             return 1
         else:
             return 0
@@ -245,13 +283,9 @@ class CMABreeder(Breeder):
             1 - (base_learning_rate) - mu_learning_rate + cs
         ) * covariance_matrix
 
-        print("left_term", left_term)
-
-        print("matmul", np.matmul(path_covariance, np.transpose(path_covariance)))
         middle_term = base_learning_rate * np.matmul(
             path_covariance, np.transpose(path_covariance)
         )
-        print("middle_term", middle_term)
         # mu = self.recombination_parents
         # lambda = population_size
 
@@ -272,12 +306,7 @@ class CMABreeder(Breeder):
         # Should right term actually consist of a slice for delta - from 0:mu for each
         # mu in range 0, mu?
         right_term = mu_learning_rate * right_hand_term
-        print("right_term", right_term)
-        input()
         updated_covariance_matrix = left_term + middle_term + right_term
-        updated_covariance_matrix = np.triu(updated_covariance_matrix) + np.transpose(
-            np.triu(updated_covariance_matrix, k=1)
-        )
 
         # update scaling and eigenvectors
         (
@@ -285,22 +314,33 @@ class CMABreeder(Breeder):
             self.covariance_eigenvectors,
             self.inverse_covariance_sqrt,
         ) = self._compute_cached_covariance_by_products(updated_covariance_matrix)
-        input()
         return updated_covariance_matrix
 
     def _update_sigma(
-        self, discount_factor, dampen_sigma, sigma_path, expected_norm_of_random
+        self, sigma, discount_factor, dampen_sigma, sigma_path, expected_norm_of_random
     ):
-        return math.exp(
-            (discount_factor / dampen_sigma)
-            * (np.linalg.norm(sigma_path) / expected_norm_of_random - 1)
+        print('(discount_factor / dampen_sigma)', (discount_factor / dampen_sigma))
+        print('sigma_path', self.sigma_path)
+        print('(np.linalg.norm(sigma_path)', np.linalg.norm(sigma_path))
+        print('(np.linalg.norm(sigma_path)/expected_norm_of_random', np.linalg.norm(sigma_path)/expected_norm_of_random)
+        print(
+            "sigma",
+            sigma,
+            "coeeff",
+            math.exp((discount_factor / dampen_sigma)
+            * ((np.linalg.norm(sigma_path) / expected_norm_of_random) - 1))
         )
+        result = sigma * math.exp(
+            (discount_factor / dampen_sigma)
+            * ((np.linalg.norm(sigma_path) / expected_norm_of_random) - 1)
+        )
+        print('result', result)
+        # input()
+
+        return result
 
     def _sample_weights(self):
-        w, v = np.linalg.eig(self.covariance_matrix)
-        scaling = np.sqrt(np.diag(v))
-
-        sample = np.random.normal((self.num_params,)) * scaling
+        sample = np.random.normal((self.num_params,)) * self.scaling
         weights = self.mean + sample * self.sigma
         return weights.flatten()
 

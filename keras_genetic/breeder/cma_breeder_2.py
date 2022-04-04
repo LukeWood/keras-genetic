@@ -1,11 +1,12 @@
 import math
 
 import numpy as np
+import scipy
 
 from keras_genetic import core
 from keras_genetic import utils
 from keras_genetic.breeder.breeder import Breeder
-import scipy
+
 
 class CMABreeder(Breeder):
     """CMABreeder produces offspring using the CMA-ES Algorithm.
@@ -125,8 +126,8 @@ class CMABreeder(Breeder):
             self.pc @ np.transpose(self.pc)
             + ((1 - hsig) * self.cc * (2 - self.cc) * self.C)
         )
-        term_3 =   self.cmu * artmp @ np.diag(self.weights) @ np.transpose(artmp)
-        self.C = (term_1 + term_2 + term_3)
+        term_3 = self.cmu * artmp @ np.diag(self.weights) @ np.transpose(artmp)
+        self.C = term_1 + term_2 + term_3
 
         # print('sigma before', self.sigma)
         # self.sigma = self.sigma * np.exp(
@@ -142,8 +143,10 @@ class CMABreeder(Breeder):
             self.C = np.triu(self.C) + np.transpose(np.triu(self.C, k=1))
             self.D, self.B = np.linalg.eig(self.C)
             self.D = np.sqrt(np.abs(self.D))
-            invsqrtC_tmp =  np.diag(np.divide(1, self.D, out=np.zeros_like(self.D), where=self.D!=0))
-            self.invsqrtC = self.B @  invsqrtC_tmp @ np.transpose(self.B)
+            invsqrtC_tmp = np.diag(
+                np.divide(1, self.D, out=np.zeros_like(self.D), where=self.D != 0)
+            )
+            self.invsqrtC = self.B @ invsqrtC_tmp @ np.transpose(self.B)
 
     def _update_mean(self, old_mean, parents, recombination_weights):
         parents_concat = np.array(
@@ -159,7 +162,7 @@ class CMABreeder(Breeder):
 
     def _sample_weights(self):
         sample = np.random.normal(size=(self.num_params))
-        distorted_sample = (self.D * sample)
+        distorted_sample = self.D * sample
         weights = self.mean + (self.sigma * (self.B @ distorted_sample))
         return weights.flatten()
 

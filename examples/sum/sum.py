@@ -18,7 +18,7 @@ def evaluate_model(individual: keras_genetic.Individual):
 
 print(
     "Sum of weights before:",
-    -(np.abs(keras_genetic.utils.weights.flatten(model.get_weights()))).sum()
+    -(np.abs(keras_genetic.utils.weights.flatten(model.get_weights()))).sum(),
 )
 
 results = keras_genetic.search(
@@ -35,5 +35,5 @@ model = results.best.load_model()
 
 print(
     "Sum of weights after:",
-    -(np.abs(keras_genetic.utils.weights.flatten(model.get_weights()))).sum()
+    -(np.abs(keras_genetic.utils.weights.flatten(model.get_weights()))).sum(),
 )
