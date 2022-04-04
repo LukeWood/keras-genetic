@@ -28,11 +28,11 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
-        layers.Conv2D(10, kernel_size=(3, 3), activation="relu"),
+        layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
         layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Conv2D(10, kernel_size=(3, 3), activation="relu"),
+        layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
         layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Conv2D(10, kernel_size=(3, 3), activation="relu"),
+        layers.Conv2D(20, kernel_size=(3, 3), activation="relu"),
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
         layers.Dense(num_classes, activation="softmax"),
@@ -54,7 +54,7 @@ results = keras_genetic.search(
     evaluator=evaluate_accuracy,
     generations=100,
     population_size=10,
-    breeder=keras_genetic.breeder.CMABreeder(model, 5, 10),
+    breeder=keras_genetic.breeder.MutationBreeder(model, 3),
     return_best=1,
 )
 

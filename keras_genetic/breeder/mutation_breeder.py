@@ -23,7 +23,7 @@ class MutationBreeder(Breeder):
         self.keep_probability = keep_probability
         self.parents_per_generation = parents_per_generation
         self.keep_parents = keep_parents
-        self.learning_rate = learning
+        self.learning_rate = learning_rate
         self._parents = None
 
     def update_state(self, generation):
@@ -40,7 +40,7 @@ class MutationBreeder(Breeder):
         mother = random.choice(parents)
 
         weights = utils.flatten(mother.weights)
-        mutation = 1.0 + (self.initialize((self.num_params,)) * self.learning_rate)
+        mutation = 1.0 + (self.initializer((self.num_params,)) * self.learning_rate)
         weights = np.multiply(weights, mutation)
         weights = utils.conform_weights_to_shape(weights, mother.weights)
 

@@ -37,6 +37,7 @@ class CMABreeder(Breeder):
 
         self.recombination_parents = recombination_parents  # mu
         self.population_size = population_size
+
         # initalize weights
         self.recombination_weights = np.log(recombination_parents + 1 / 2) - np.log(
             np.arange(0, recombination_parents) + 1
@@ -69,6 +70,9 @@ class CMABreeder(Breeder):
             - (1 / 4 * self.num_params)
             + 1 / (21 * (self.num_params**2))
         )
+        self.inverse_weight_effectiveness = (
+            1 / (np.power(self.recombination_weights, 2)).sum()
+        )
 
     def offspring(self):
         """offspring() samples from a multivariate normal.
@@ -91,39 +95,19 @@ class CMABreeder(Breeder):
         )
 
     def update_state(self, generation):
-        """`update_state(generation)` method updates the state of the breeder class.
-
-        In pseudocode:
-
-        x1...xn = x_s1... x_sn -> individuals sorted based on fitness
-
-        mean_prime = mean // we later need mean - mean_prime and x_i - mean_prime
-        mean = update_mean(x1...xn) // move the mean to better solutions
-
-        // update "isotropic evolution path"
-        p_sigma = update_p_sigma(p_sigma, sigma^-1 * C^(-1/2) * (m - m_prime))
-        // update anisotropic evolution path
-        p_c = update_p_c(p_c, sigma^-1*(m-m_prime), norm(p_sigma))
-
-        // update covariance matrix
-        C = update_C(C, p_c, (x1 - mean_prime) / sigma, ... (x_n - m_prime) / sigma)
-
-        // update step-size using isotropic path length
-        sigma = update_sigma(sigma, norm(p_sigma))
-        """
         # template is used to pass the model down to the children
         old_mean = self.mean
+        # parents are the individuals picked for use in the mean
         parents = generation[: self.recombination_parents]
-        population_size = len(generation)
+        inverse_weight_effectiveness = self.inverse_weight_effectiveness
 
-        inverse_weight_effectiveness = (
-            1 / (np.power(self.recombination_weights, 2)).sum()
-        )
+        new_mean = self.update_mean(old_mean, parents)
+        # lambda = population_size
 
-        self.mean = self._update_mean(old_mean, parents)
+        self.mean = self._update_mean(old_mean, parents, self.recombination_weights)
 
         self.sigma_path = self._update_sigma_path(
-            self.mean, old_mean, self.discount_factor_sigma, population_size
+            self.sigma_path, self.mean, old_mean, self.discount_factor_sigma, population_size
         )
         self.covariance_path = self._update_covariance_path(
             self.covariance_path,
@@ -153,21 +137,19 @@ class CMABreeder(Breeder):
             self.expected_norm_of_random,
         )
 
-    def _update_mean(self, old_mean, parents):
+    def _update_mean(self, old_mean, parents, recombination_weights):
         parents_concat = np.array(
             [utils.flatten(candidate.weights) for candidate in parents]
         )
         # broadcast mean over the batch dimension, which is the number of parents
         delta = parents_concat - self.mean[None, ...]
         # broadcast the weights across the num_params dimension
-        updates = delta * self.recombination_weights[..., None]
+        updates = delta * recombination_weights[..., None]
         # sum over the individual num_parents axis
         update = updates.sum(axis=0)
         return old_mean + update
 
-    def _update_sigma_path(self, new_mean, old_mean, discount_factor, population_size):
-        sigma_path = self.sigma_path
-
+    def _update_sigma_path(self, sigma_path, new_mean, old_mean, discount_factor, population_size):
         # can be thought of as a slow degeneration
         discount = (1 - discount_factor) * sigma_path
 
