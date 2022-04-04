@@ -41,7 +41,7 @@ class MutationBreeder(Breeder):
 
         weights = utils.flatten(mother.weights)
         mutation = 1.0 + (self.initialize((self.num_params,)) * self.learning_rate)
-        weights = np.multipy(weights, mutation)
+        weights = np.multiply(weights, mutation)
         weights = utils.conform_weights_to_shape(weights, mother.weights)
 
         return core.Individual(weights, model=mother.model)

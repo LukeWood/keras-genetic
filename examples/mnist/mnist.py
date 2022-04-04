@@ -32,10 +32,13 @@ model = keras.Sequential(
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Conv2D(10, kernel_size=(3, 3), activation="relu"),
         layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Conv2D(10, kernel_size=(3, 3), activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
         layers.Dense(num_classes, activation="softmax"),
     ]
 )
+model.summary()
 model.compile(metrics=["accuracy"])
 
 

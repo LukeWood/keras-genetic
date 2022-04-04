@@ -121,7 +121,9 @@ class _SearchManager:
             # store the best individuals from all runs
             # these are ultimately returned to users
             # also they are used in on_generation_end callbacks
-            self.best_individuals = sorted(self.best_individuals + population, reverse=True)[:self.return_best]
+            self.best_individuals = sorted(
+                self.best_individuals + population, reverse=True
+            )[: self.return_best]
 
             temp_result = SearchResult(self.best_individuals)
             for callback in self.callbacks:
