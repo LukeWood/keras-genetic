@@ -40,7 +40,7 @@ results = keras_genetic.search(
     model=model,
     evaluator=evaluate_cartpole,
     generations=20,
-    population_size=10,
+    population_size=20,
     breeder=keras_genetic.breeder.RandomWeightBreeder(model, parents_per_generation=3),
     return_best=1,
     callbacks=[keras_genetic.callbacks.EarlyStopping(goal=500.0), show_best]
