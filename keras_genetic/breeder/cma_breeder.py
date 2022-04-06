@@ -49,7 +49,7 @@ class CMABreeder(Breeder):
             / np.multiply(self.recombination_weights, self.recombination_weights)
         ).sum()
 
-        self.cs = (self.mu_effictive+2) / (self.num_params+self.mu_effictive+5);
+        self.cs = (self.mu_effictive + 2) / (self.num_params + self.mu_effictive + 5)
 
         self.dampen_sigma = (
             1
@@ -85,12 +85,12 @@ class CMABreeder(Breeder):
         v, w = np.linalg.eigh(covariance_matrix)
         # values in w
         # vectors in v
-        print('w', w)
-        print('v', v)
+        print("w", w)
+        print("v", v)
         scaling = np.sqrt(np.abs(v))
-        print('scaling', scaling)
+        print("scaling", scaling)
         covariance_eigenvectors = w
-        print('covariance_eigenvectors', covariance_eigenvectors)
+        print("covariance_eigenvectors", covariance_eigenvectors)
 
         # update inverse_covariance_sqrt
         intermediary_scaling = np.divide(
@@ -99,11 +99,11 @@ class CMABreeder(Breeder):
             out=np.zeros_like(np.diag(scaling)),
             where=scaling != 0,
         )
-        print('intermediary_scaling', intermediary_scaling)
+        print("intermediary_scaling", intermediary_scaling)
         inverse_covariance_sqrt = w * np.diag(intermediary_scaling) * np.transpose(w)
-        print('scaling', scaling)
-        print('inverse_covariance_sqrt', inverse_covariance_sqrt)
-        print('covariance_eigenvectors', covariance_eigenvectors)
+        print("scaling", scaling)
+        print("inverse_covariance_sqrt", inverse_covariance_sqrt)
+        print("covariance_eigenvectors", covariance_eigenvectors)
         # input('cached covariance products')
         return scaling, covariance_eigenvectors, inverse_covariance_sqrt
 
@@ -174,7 +174,7 @@ class CMABreeder(Breeder):
             self.sigma_path,
             self.expected_norm_of_random,
         )
-        print('dampen_sigma', self.dampen_sigma)
+        print("dampen_sigma", self.dampen_sigma)
         input()
 
     def _compute_hsig(
@@ -214,7 +214,7 @@ class CMABreeder(Breeder):
         right_term = self._complement_discount_factor(discount_factor)
         print("complement_discount", right_term)
 
-        print('inverse_covariance_sqrt', self.inverse_covariance_sqrt)
+        print("inverse_covariance_sqrt", self.inverse_covariance_sqrt)
         print()
         right_term = (
             weight_effectiveness
@@ -224,7 +224,7 @@ class CMABreeder(Breeder):
         )
         print("left_term", left_term)
         print("right_term", right_term)
-        print('sigma_path_result', left_term + right_term)
+        print("sigma_path_result", left_term + right_term)
         return left_term + right_term
 
     def _update_covariance_path(
@@ -319,22 +319,27 @@ class CMABreeder(Breeder):
     def _update_sigma(
         self, sigma, discount_factor, dampen_sigma, sigma_path, expected_norm_of_random
     ):
-        print('(discount_factor / dampen_sigma)', (discount_factor / dampen_sigma))
-        print('sigma_path', self.sigma_path)
-        print('(np.linalg.norm(sigma_path)', np.linalg.norm(sigma_path))
-        print('(np.linalg.norm(sigma_path)/expected_norm_of_random', np.linalg.norm(sigma_path)/expected_norm_of_random)
+        print("(discount_factor / dampen_sigma)", (discount_factor / dampen_sigma))
+        print("sigma_path", self.sigma_path)
+        print("(np.linalg.norm(sigma_path)", np.linalg.norm(sigma_path))
+        print(
+            "(np.linalg.norm(sigma_path)/expected_norm_of_random",
+            np.linalg.norm(sigma_path) / expected_norm_of_random,
+        )
         print(
             "sigma",
             sigma,
             "coeeff",
-            math.exp((discount_factor / dampen_sigma)
-            * ((np.linalg.norm(sigma_path) / expected_norm_of_random) - 1))
+            math.exp(
+                (discount_factor / dampen_sigma)
+                * ((np.linalg.norm(sigma_path) / expected_norm_of_random) - 1)
+            ),
         )
         result = sigma * math.exp(
             (discount_factor / dampen_sigma)
             * ((np.linalg.norm(sigma_path) / expected_norm_of_random) - 1)
         )
-        print('result', result)
+        print("result", result)
         # input()
 
         return result
