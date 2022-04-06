@@ -7,24 +7,29 @@ from keras_genetic import utils
 from keras_genetic.breeder.breeder import Breeder
 
 
-class MutationBreeder(Breeder):
-    """MutationBreeder randomly multiplies weights by mutation factors."""
+class RandomWeightBreeder(Breeder):
+    """RandomWeightBreeder randomly mutates features on individuals.
+
+    The mutations are initialized to completely random values drawn from the
+    `initializer` passed in the constructor.  This breeder can be used to ensure that
+    the algorithm always has a chance to find the global optimum, but converges
+    incredibly slow.  It should only be used within the context of a combination
+    breeder.
+    """
 
     def __init__(
         self,
         model,
         parents_per_generation,
-        keep_probability=0.9,
-        learning_rate=0.1,
+        mutation_rate=0.1,
         keep_parents=True,
         **kwargs,
     ):
         super().__init__(model, **kwargs)
-        self.keep_probability = keep_probability
+        self.mutation_rate = mutation_rate
         self.parents_per_generation = parents_per_generation
         self.keep_parents = keep_parents
-        self.learning_rate = learning_rate
-        self._parents = None
+        self.parents = None
 
     def update_state(self, generation):
         self._parents = generation[: self.parents_per_generation]
@@ -33,18 +38,20 @@ class MutationBreeder(Breeder):
         parents = self._parents
         if not parents:
             raise RuntimeError(
-                "`MutationBreeder.offspring()` called before "
+                "`RandomWeightBreeder.offspring()` called before "
                 "`update_state()`.  Please call `update_state()` at least once before "
                 "calling `offspring()`."
             )
         mother = random.choice(parents)
-
-        weights = utils.flatten(mother.weights)
-        mutation = 1.0 + (self.initializer((self.num_params,)) * self.learning_rate)
-        weights = np.multiply(weights, mutation)
-        weights = utils.conform_weights_to_shape(weights, mother.weights)
-
-        return core.Individual(weights, model=mother.model)
+        mother_weights = utils.flatten(mother.weights)
+        choices = (
+            np.random.uniform(0, 1, size=mother_weights.shape) < self.mutation_rate
+        )
+        mutations = self.initializer(mother_weights.shape)
+        result = np.where(choices, mutations, mother_weights)
+        return core.Individual(
+            utils.conform_weights_to_shape(result, mother.weights), model=self.model
+        )
 
     def population(self, population_size):
         result = []

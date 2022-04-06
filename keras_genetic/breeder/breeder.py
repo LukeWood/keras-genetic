@@ -6,12 +6,15 @@ import keras_genetic
 class Breeder:
     """Breeder is responsible for creating offspring."""
 
-    def __init__(self, initializer=None):
+    def __init__(self, model, initializer=None):
+        self.model = model
+        self.num_params = model.count_params()
+
         if initializer is None:
             initializer = keras_genetic.initializers.random_normal.RandomNormal()
         self.initializer = initializer
 
-    def offspring(self, parents):
+    def offspring(self):
         """`offspring()` creates a new offspring from a mother and father model.
 
         Args:
@@ -23,18 +26,20 @@ class Breeder:
             "`offspring()` must be implemented on the breeder class."
         )
 
-    def population_from_parents(self, parents, population_size):
-        result = []
-        for _ in range(population_size):
-            result.append(self.offspring(parents))
-        return result
+    def update_state(self, generation):
+        raise NotImplementedError(
+            "`update_state(generation)` must be implemented on the breeder class."
+        )
 
-    def fully_random_weight_set(self, mother):
+    def population(self, population_size):
+        raise NotImplementedError(
+            "`population()` must be implemented on the breeder class."
+        )
+
+    def fully_random_weight_set(self):
         offspring_weights = []
 
-        # each 'mother.weight', 'father.weight' we have a vector of weights
-        # we must traverse the entire array and sample a random one for each
-        for m in mother.weights:
+        for m in self.model.get_weights():
             shape = m.shape
 
             # easier to traverse them as flattened arrays
@@ -45,4 +50,4 @@ class Breeder:
 
             offspring_weights.append(np.array(result).reshape(shape))
 
-        return keras_genetic.Individual(offspring_weights, model=mother.model)
+        return keras_genetic.Individual(offspring_weights, model=self.model)

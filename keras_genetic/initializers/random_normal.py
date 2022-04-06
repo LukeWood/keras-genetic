@@ -8,5 +8,5 @@ class RandomNormal(Initializer):
         self.mean = mean
         self.std = std
 
-    def __call__(self):
-        return np.random.normal(self.mean, self.std)
+    def __call__(self, shape=None):
+        return np.random.normal(self.mean, self.std, size=shape)
